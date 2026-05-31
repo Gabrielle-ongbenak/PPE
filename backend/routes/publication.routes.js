@@ -11,7 +11,7 @@ const {
 } = require('../controllers/publication.controller');
 // Route publique de recherche
 router.get('/recherche', rechercherLogements);
-const { verifierToken } = require('../middleware/auth.middleware');
+const verifierToken = require('../middleware/auth.middleware');
 
 router.post('/',              verifierToken, creerPublication);
 router.get('/mes-annonces',   verifierToken, mesPublications);

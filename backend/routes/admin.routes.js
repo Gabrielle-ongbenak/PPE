@@ -13,14 +13,16 @@ const {
   statistiques,
 } = require('../controllers/admin.controller');
 
-const { verifierToken } = require('../middleware/auth.middleware');
+// Double protection
+const verifierToken = require('../middleware/auth.middleware');
+const { verifierAdmin } = require('../middleware/admin.middleware');
 
-// Toutes les routes admin sont protégées
-router.get('/agents',               verifierToken, tousLesAgents);
-router.put('/agents/:id/valider',   verifierToken, validerAgent);
-router.put('/agents/:id/rejeter',   verifierToken, rejeterAgent);
-router.get('/logements',            verifierToken, tousLesLogements);
-router.delete('/logements/:id',     verifierToken, supprimerLogement);
-router.get('/stats',                verifierToken, statistiques);
+// Toutes les routes admin sont doublement protégées
+router.get('/agents',               verifierToken, verifierAdmin, tousLesAgents);
+router.put('/agents/:id/valider',   verifierToken, verifierAdmin, validerAgent);
+router.put('/agents/:id/rejeter',   verifierToken, verifierAdmin, rejeterAgent);
+router.get('/logements',            verifierToken, verifierAdmin, tousLesLogements);
+router.delete('/logements/:id',     verifierToken, verifierAdmin, supprimerLogement);
+router.get('/stats',                verifierToken, verifierAdmin, statistiques);
 
 module.exports = router;
