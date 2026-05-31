@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const sequelize = require('./config/database');
 const adminRoutes = require('./routes/admin.routes');
+const messageRoutes = require('./routes/message.routes');
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ const photoRoutes = require('./routes/photo.routes');
 app.use('/api/publications', publicationRoutes);
 app.use('/api', photoRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/messages', messageRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: ' LogiCam API — En ligne !' });
