@@ -1,10 +1,26 @@
+import img1 from '../assets/images/1.jpg';
+import img2 from '../assets/images/2.jpg';
+import img3 from '../assets/images/3  .jpg';
+import img4 from '../assets/images/4.jpg';
+import img5 from '../assets/images/5.jpg';
+import img6 from '../assets/images/6.jpg';
+import img7 from '../assets/images/7.jpg';
+import img8 from '../assets/images/8.jpg';
+import img9 from '../assets/images/9.jpg';
+import img10 from '../assets/images/10.jpg';
+import img11 from '../assets/images/11.jpg';
+import img12 from '../assets/images/12.jpg';
+import img13 from '../assets/images/13.jpg';
+import img14 from '../assets/images/14.jpg';
+import img15 from '../assets/images/15.jpg';
+
 export const mockHousingData = [
   {
     id: 1,
     title: "Studio Moderne Bastos",
     type: "Studio",
     price: 150000,
-    currency: "XAF",
+    currency: "FCFA",
     location: "Yaoundé",
     region: "Centre",
     rating: 4.5,
@@ -14,11 +30,7 @@ export const mockHousingData = [
     area: 45,
     description: "Studio moderne et lumineux situé dans le quartier prisé de Bastos. Proche des commerces et transports.",
     amenities: ["WiFi", "Climatisation", "Parking", "Sécurité 24/7"],
-    images: [
-      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800",
-      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800",
-      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800"
-    ],
+    images: [img1, img2, img3],
     isFavorite: false,
     landlord: {
       name: "Jean Dupont",
@@ -31,7 +43,7 @@ export const mockHousingData = [
     title: "Appartement 3 Pièces Akwa",
     type: "Appartement",
     price: 350000,
-    currency: "XAF",
+    currency: "FCFA",
     location: "Douala",
     region: "Littoral",
     rating: 4.8,
@@ -41,11 +53,7 @@ export const mockHousingData = [
     area: 120,
     description: "Bel appartement spacieux au cœur de Douala. Vue sur la ville et équipements modernes.",
     amenities: ["WiFi", "Climatisation", "Parking", "Piscine", "Sécurité 24/7"],
-    images: [
-      "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800",
-      "https://images.unsplash.com/photo-1502672023488-70e25813eb80?w=800",
-      "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=800"
-    ],
+    images: [img4, img5, img6],
     isFavorite: true,
     landlord: {
       name: "Marie Kouame",
@@ -58,7 +66,7 @@ export const mockHousingData = [
     title: "Villa Meublée Bafoussam",
     type: "Villa",
     price: 500000,
-    currency: "XAF",
+    currency: "FCFA",
     location: "Bafoussam",
     region: "Ouest",
     rating: 4.7,
@@ -68,11 +76,7 @@ export const mockHousingData = [
     area: 250,
     description: "Magnifique villa meublée avec jardin. Idéale pour les familles.",
     amenities: ["WiFi", "Climatisation", "Parking", "Jardin", "Sécurité 24/7", "Générateur"],
-    images: [
-      "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800",
-      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800"
-    ],
+    images: [img7, img8, img9],
     isFavorite: false,
     landlord: {
       name: "Paul Nkodo",
@@ -85,7 +89,7 @@ export const mockHousingData = [
     title: "Studio Coquet Ngaoundéré",
     type: "Studio",
     price: 80000,
-    currency: "XAF",
+    currency: "FCFA",
     location: "Ngaoundéré",
     region: "Adamaoua",
     rating: 4.2,
@@ -95,11 +99,7 @@ export const mockHousingData = [
     area: 35,
     description: "Studio cosy et économique. Parfait pour les étudiants ou jeunes professionnels.",
     amenities: ["WiFi", "Ventilateur", "Parking"],
-    images: [
-      "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800",
-      "https://images.unsplash.com/photo-1536376072261-38c75010e6c9?w=800",
-      "https://images.unsplash.com/photo-1554995207-c18c203602cb?w=800"
-    ],
+    images: [img10, img11, img12],
     isFavorite: false,
     landlord: {
       name: "Aminatou Ahmadou",
@@ -112,7 +112,7 @@ export const mockHousingData = [
     title: "Appartement Luxe Maroua",
     type: "Appartement",
     price: 280000,
-    currency: "XAF",
+    currency: "FCFA",
     location: "Maroua",
     region: "Extrême-Nord",
     rating: 4.6,
@@ -122,11 +122,7 @@ export const mockHousingData = [
     area: 90,
     description: "Appartement de standing avec finitions haut de gamme.",
     amenities: ["WiFi", "Climatisation", "Parking", "Sécurité 24/7", "Générateur"],
-    images: [
-      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800",
-      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800",
-      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800"
-    ],
+    images: [img13, img14, img15],
     isFavorite: false,
     landlord: {
       name: "Ibrahim Mahamat",
@@ -139,7 +135,7 @@ export const mockHousingData = [
     title: "Chambre Individuelle Garoua",
     type: "Chambre",
     price: 45000,
-    currency: "XAF",
+    currency: "FCFA",
     location: "Garoua",
     region: "Nord",
     rating: 4.0,
@@ -149,11 +145,7 @@ export const mockHousingData = [
     area: 20,
     description: "Chambre individuelle dans une maison partagée. Calme et sécurisé.",
     amenities: ["WiFi", "Ventilateur", "Cuisine partagée"],
-    images: [
-      "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800",
-      "https://images.unsplash.com/photo-1502672023488-70e25813eb80?w=800",
-      "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800"
-    ],
+    images: [img1, img2, img3],
     isFavorite: false,
     landlord: {
       name: "Habiba Ali",
@@ -166,7 +158,7 @@ export const mockHousingData = [
     title: "Duplex Bertoua",
     type: "Duplex",
     price: 420000,
-    currency: "XAF",
+    currency: "FCFA",
     location: "Bertoua",
     region: "Est",
     rating: 4.4,
@@ -176,11 +168,7 @@ export const mockHousingData = [
     area: 150,
     description: "Duplex moderne avec terrasse. Idéal pour les familles nombreuses.",
     amenities: ["WiFi", "Climatisation", "Parking", "Terrasse", "Sécurité 24/7"],
-    images: [
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800",
-      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
-      "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800"
-    ],
+    images: [img4, img5, img6],
     isFavorite: true,
     landlord: {
       name: "Emmanuel Mbarga",
@@ -193,7 +181,7 @@ export const mockHousingData = [
     title: "Studio Ebolowa",
     type: "Studio",
     price: 65000,
-    currency: "XAF",
+    currency: "FCFA",
     location: "Ebolowa",
     region: "Sud",
     rating: 4.3,
@@ -203,11 +191,7 @@ export const mockHousingData = [
     area: 40,
     description: "Studio fonctionnel proche du centre-ville.",
     amenities: ["WiFi", "Ventilateur", "Parking"],
-    images: [
-      "https://images.unsplash.com/photo-1536376072261-38c75010e6c9?w=800",
-      "https://images.unsplash.com/photo-1554995207-c18c203602cb?w=800",
-      "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800"
-    ],
+    images: [img7, img8, img9],
     isFavorite: false,
     landlord: {
       name: "Claire Mballa",
@@ -220,7 +204,7 @@ export const mockHousingData = [
     title: "Appartement Bamenda",
     type: "Appartement",
     price: 220000,
-    currency: "XAF",
+    currency: "FCFA",
     location: "Bamenda",
     region: "Nord-Ouest",
     rating: 4.5,
@@ -230,11 +214,7 @@ export const mockHousingData = [
     area: 85,
     description: "Appartement bien situé avec vue panoramique.",
     amenities: ["WiFi", "Climatisation", "Parking", "Sécurité 24/7"],
-    images: [
-      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800",
-      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800",
-      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800"
-    ],
+    images: [img10, img11, img12],
     isFavorite: false,
     landlord: {
       name: "Peter Fru",
@@ -247,7 +227,7 @@ export const mockHousingData = [
     title: "Villa Limbe",
     type: "Villa",
     price: 450000,
-    currency: "XAF",
+    currency: "FCFA",
     location: "Limbe",
     region: "Sud-Ouest",
     rating: 4.9,
@@ -257,11 +237,7 @@ export const mockHousingData = [
     area: 200,
     description: "Superbe villa avec vue sur mer. Jardin et piscine privée.",
     amenities: ["WiFi", "Climatisation", "Parking", "Piscine", "Jardin", "Sécurité 24/7", "Générateur"],
-    images: [
-      "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800",
-      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800"
-    ],
+    images: [img13, img14, img15],
     isFavorite: true,
     landlord: {
       name: "Grace Epie",

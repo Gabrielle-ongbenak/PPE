@@ -212,10 +212,7 @@ const HousingCard = ({ housing, onPress, onFavoriteToggle }) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <span style={{ fontSize: '18px', fontWeight: 'bold', color: theme.accent }}>
-              {housing.price.toLocaleString()} {housing.currency}
-            </span>
-            <span style={{ fontSize: '12px', color: theme.secondaryText, marginLeft: '4px' }}>
-              /mois
+              {housing.price.toLocaleString()} {housing.currency}/mois
             </span>
           </div>
           <span

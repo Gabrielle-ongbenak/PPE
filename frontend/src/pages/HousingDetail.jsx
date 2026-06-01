@@ -240,10 +240,7 @@ const HousingDetail = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <span style={{ fontSize: '28px', fontWeight: 'bold', color: theme.accent }}>
-                {housing.price.toLocaleString()} {housing.currency}
-              </span>
-              <span style={{ fontSize: '15px', color: theme.secondaryText, marginLeft: '4px' }}>
-                /mois
+                {housing.price.toLocaleString()} {housing.currency}/mois
               </span>
             </div>
             <span
