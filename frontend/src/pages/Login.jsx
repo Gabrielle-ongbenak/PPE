@@ -58,7 +58,7 @@ const Login = () => {
             color: theme.secondaryText,
           }}
         >
-          Connectez-vous à votre compte Logitech
+          Connectez-vous à votre compte Logicam
         </p>
       </div>
 
@@ -249,34 +249,19 @@ const Login = () => {
           <ArrowRight size={20} />
         </button>
 
-        {/* Register Link */}
-        <div
-          style={{
-            textAlign: 'center',
-            marginBottom: '32px',
-          }}
-        >
-          <span
-            style={{
-              fontSize: '14px',
-              color: theme.secondaryText,
-            }}
-          >
-            Pas encore de compte ?{' '}
-          </span>
-          <button
-            type="button"
-            onClick={() => navigate('/register')}
-            style={{
-              backgroundColor: 'transparent',
-              border: 'none',
-              color: theme.primary,
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-            }}
-          >
-            S'inscrire
+        <div style={{ textAlign: 'center', marginBottom: 16 }}>
+          <button type="button" onClick={() => navigate('/home')} style={{ background: 'transparent', border: 'none', color: theme.secondaryText, cursor: 'pointer' }}>
+            Continuer en visiteur (sans compte)
+          </button>
+        </div>
+        <div style={{ textAlign: 'center', marginBottom: 8 }}>
+          <button type="button" onClick={() => navigate('/agent/login')} style={{ background: 'transparent', border: 'none', color: theme.primary, fontWeight: 600, cursor: 'pointer' }}>
+            Espace agent immobilier
+          </button>
+        </div>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <button type="button" onClick={() => navigate('/admin/login')} style={{ background: 'transparent', border: 'none', color: theme.secondaryText, cursor: 'pointer' }}>
+            Administration
           </button>
         </div>
       </form>

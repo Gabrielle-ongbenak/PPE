@@ -10,7 +10,7 @@ const Assistant = () => {
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: "Bonjour ! Je suis l'Assistant Logitech. Comment puis-je vous aider à trouver votre logement idéal ?",
+      text: "Bonjour ! Je suis l'Assistant Logicam. Comment puis-je vous aider à trouver votre logement idéal ?",
       sent: false,
       time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       isBot: true
@@ -133,7 +133,7 @@ const Assistant = () => {
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: '16px', fontWeight: '600', color: theme.text }}>
-            Assistant Logitech
+            Assistant Logicam
           </div>
           <div style={{ fontSize: '12px', color: '#16A34A' }}>
             En ligne
@@ -182,7 +182,7 @@ const Assistant = () => {
                 >
                   <Bot size={16} color={theme.primary} />
                   <span style={{ fontSize: '12px', fontWeight: '600', color: theme.primary }}>
-                    Assistant Logitech
+                    Assistant Logicam
                   </span>
                 </div>
               )}
@@ -222,7 +222,7 @@ const Assistant = () => {
               <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                 <Bot size={16} color={theme.primary} />
                 <span style={{ fontSize: '12px', fontWeight: '600', color: theme.primary, marginRight: '8px' }}>
-                  Assistant Logitech
+                  Assistant Logicam
                 </span>
                 {[0, 1, 2].map((i) => (
                   <div

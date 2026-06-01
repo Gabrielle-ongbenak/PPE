@@ -76,7 +76,7 @@ const Register = () => {
             color: theme.secondaryText,
           }}
         >
-          Rejoignez Logitech pour trouver votre logement idéal
+          Rejoignez Logicam pour trouver votre logement idéal
         </p>
       </div>
 

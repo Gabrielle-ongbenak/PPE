@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import BottomNavigation from '../components/BottomNavigation';
+import ContactForm from '../components/ContactForm';
 import { getHousingById } from '../data/mockHousingData';
+import { propertiesApi, mapPropertyFromApi } from '../services/api';
 import { ArrowLeft, Heart, Share2, MapPin, Star, Bed, Bath, Maximize, Phone, MessageCircle, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const HousingDetail = () => {
@@ -11,8 +13,26 @@ const HousingDetail = () => {
   const { theme } = useTheme();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [housing, setHousing] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showContact, setShowContact] = useState(false);
+  const [contactSent, setContactSent] = useState(false);
 
-  const housing = getHousingById(parseInt(id));
+  useEffect(() => {
+    propertiesApi
+      .getById(id)
+      .then((res) => setHousing(mapPropertyFromApi(res.publication)))
+      .catch(() => setHousing(getHousingById(parseInt(id, 10))))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', backgroundColor: theme.background, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: theme.text }}>Chargement...</p>
+      </div>
+    );
+  }
 
   if (!housing) {
     return (
@@ -394,7 +414,8 @@ const HousingDetail = () => {
             </div>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
-            <button
+            <a
+              href={housing.landlord?.phone ? `tel:${housing.landlord.phone}` : undefined}
               style={{
                 flex: 1,
                 backgroundColor: theme.primary + '15',
@@ -409,12 +430,15 @@ const HousingDetail = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
+                textDecoration: 'none',
               }}
             >
               <Phone size={18} />
               Appeler
-            </button>
+            </a>
             <button
+              type="button"
+              onClick={() => setShowContact(true)}
               style={{
                 flex: 1,
                 backgroundColor: theme.action,
@@ -437,8 +461,9 @@ const HousingDetail = () => {
           </div>
         </div>
 
-        {/* Book Button */}
         <button
+          type="button"
+          onClick={() => setShowContact(true)}
           style={{
             width: '100%',
             backgroundColor: theme.action,
@@ -449,21 +474,41 @@ const HousingDetail = () => {
             fontWeight: '600',
             color: '#FFFFFF',
             cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(251, 191, 36, 0.3)',
-            transition: 'all 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 6px 16px rgba(251, 191, 36, 0.4)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(251, 191, 36, 0.3)';
           }}
         >
-          Réserver ce logement
+          Contacter l'agent par email
         </button>
+
+        {contactSent && (
+          <p style={{ color: theme.primary, marginTop: 12, textAlign: 'center' }}>
+            Message envoyé ! L'agent vous répondra par email.
+          </p>
+        )}
       </div>
+
+      {showContact && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+            display: 'flex', alignItems: 'flex-end', zIndex: 200,
+          }}
+          onClick={() => setShowContact(false)}
+        >
+          <div
+            style={{
+              width: '100%', maxHeight: '80vh', overflow: 'auto',
+              background: theme.surface, borderRadius: '16px 16px 0 0', padding: 24,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ContactForm
+              propertyId={id}
+              onSuccess={() => { setContactSent(true); setShowContact(false); }}
+              onClose={() => setShowContact(false)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Bottom Navigation */}
       <BottomNavigation />

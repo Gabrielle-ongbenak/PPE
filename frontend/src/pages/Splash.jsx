@@ -40,7 +40,7 @@ const Splash = () => {
           letterSpacing: '2px',
         }}
       >
-        Logitech
+        Logicam
       </h1>
       <p
         style={{

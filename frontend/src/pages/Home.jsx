@@ -1,16 +1,29 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import Logo from '../components/Logo';
 import BottomNavigation from '../components/BottomNavigation';
 import HousingCard from '../components/HousingCard';
 import { mockHousingData } from '../data/mockHousingData';
+import { propertiesApi, mapPropertyFromApi } from '../services/api';
 import { Search, SlidersHorizontal, Bot, Bell } from 'lucide-react';
 
 const Home = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const [housingData, setHousingData] = useState(mockHousingData);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    propertiesApi
+      .search()
+      .then((res) => {
+        const items = (res.logements || []).map(mapPropertyFromApi);
+        if (items.length > 0) setHousingData(items);
+      })
+      .catch(() => setHousingData(mockHousingData))
+      .finally(() => setLoading(false));
+  }, []);
 
   const handleCardPress = (id) => {
     navigate(`/housing/${id}`);

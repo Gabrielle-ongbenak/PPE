@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import Logo from '../components/Logo';
 import BottomNavigation from '../components/BottomNavigation';
 import HousingCard from '../components/HousingCard';
 import { mockHousingData } from '../data/mockHousingData';
+import { propertiesApi, mapPropertyFromApi } from '../services/api';
 import { cameroonRegions, getCitiesByRegion } from '../data/cameroonRegions';
 import { ArrowLeft, Search as SearchIcon, SlidersHorizontal, ChevronDown, X } from 'lucide-react';
 
@@ -22,38 +23,41 @@ const Search = () => {
   const availableCities = selectedRegion ? getCitiesByRegion(selectedRegion) : [];
   const housingTypes = ['Tous', 'Studio', 'Appartement', 'Villa', 'Chambre', 'Duplex'];
 
-  const applyFilters = () => {
-    let filtered = mockHousingData;
+  const typeToId = { Chambre: 1, Studio: 2, Appartement: 3 };
 
-    if (searchQuery) {
-      filtered = filtered.filter(housing =>
-        housing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        housing.location.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+  const applyFilters = async () => {
+    const params = {};
+    if (selectedCity) params.ville = selectedCity;
+    if (selectedRegion) params.region = selectedRegion;
+    if (searchQuery) params.ville = searchQuery;
+    if (selectedType && selectedType !== 'Tous') params.type = typeToId[selectedType];
+    if (priceRange.min) params.prix_min = priceRange.min;
+    if (priceRange.max) params.prix_max = priceRange.max;
+
+    try {
+      const res = await propertiesApi.search(params);
+      const items = (res.logements || []).map(mapPropertyFromApi);
+      setFilteredHousing(items.length ? items : []);
+    } catch {
+      let filtered = mockHousingData;
+      if (searchQuery) {
+        filtered = filtered.filter((h) =>
+          h.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          h.location.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+      if (selectedRegion) filtered = filtered.filter((h) => h.region === selectedRegion);
+      if (selectedCity) filtered = filtered.filter((h) => h.location === selectedCity);
+      if (selectedType && selectedType !== 'Tous') filtered = filtered.filter((h) => h.type === selectedType);
+      if (priceRange.min) filtered = filtered.filter((h) => h.price >= parseInt(priceRange.min, 10));
+      if (priceRange.max) filtered = filtered.filter((h) => h.price <= parseInt(priceRange.max, 10));
+      setFilteredHousing(filtered);
     }
-
-    if (selectedRegion) {
-      filtered = filtered.filter(housing => housing.region === selectedRegion);
-    }
-
-    if (selectedCity) {
-      filtered = filtered.filter(housing => housing.location === selectedCity);
-    }
-
-    if (selectedType && selectedType !== 'Tous') {
-      filtered = filtered.filter(housing => housing.type === selectedType);
-    }
-
-    if (priceRange.min) {
-      filtered = filtered.filter(housing => housing.price >= parseInt(priceRange.min));
-    }
-
-    if (priceRange.max) {
-      filtered = filtered.filter(housing => housing.price <= parseInt(priceRange.max));
-    }
-
-    setFilteredHousing(filtered);
   };
+
+  useEffect(() => {
+    applyFilters();
+  }, []);
 
   const resetFilters = () => {
     setSearchQuery('');
