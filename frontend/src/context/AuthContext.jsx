@@ -31,11 +31,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginAgent = async (email, password) => {
-    const res = await authApi.loginAgent(email, password);
-    localStorage.setItem('logicam_token', res.token);
-    const me = await authApi.me();
-    setUser(me.user);
-    return me;
+    try {
+      const res = await authApi.loginAgent(email, password);
+      localStorage.setItem('logicam_token', res.token);
+      const me = await authApi.me();
+      setUser(me.user);
+      return me;
+    } catch (err) {
+      throw err; // Re-throw to be caught by the component
+    }
   };
 
   const logout = () => {

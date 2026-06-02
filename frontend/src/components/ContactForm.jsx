@@ -76,16 +76,28 @@ const ContactForm = ({ propertyId, onSuccess, onClose }) => {
         disabled={loading}
         style={{
           width: '100%',
-          padding: '14px',
+          padding: '16px',
           border: 'none',
-          borderRadius: '10px',
+          borderRadius: '12px',
           backgroundColor: theme.action,
           color: '#fff',
           fontWeight: 600,
+          fontSize: '16px',
           cursor: 'pointer',
+          transition: 'all 0.2s',
+          marginTop: '8px',
+          boxShadow: '0 4px 12px rgba(251, 191, 36, 0.2)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 6px 16px rgba(251, 191, 36, 0.3)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 4px 12px rgba(251, 191, 36, 0.2)';
         }}
       >
-        {loading ? 'Envoi...' : 'Envoyer par email'}
+        {loading ? 'Envoi...' : 'Envoyer le message'}
       </button>
     </form>
   );

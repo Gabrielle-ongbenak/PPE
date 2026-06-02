@@ -23,13 +23,14 @@ const Search = () => {
   const availableCities = selectedRegion ? getCitiesByRegion(selectedRegion) : [];
   const housingTypes = ['Tous', 'Studio', 'Appartement', 'Villa', 'Chambre', 'Duplex'];
 
-  const typeToId = { Chambre: 1, Studio: 2, Appartement: 3 };
+  const typeToId = { Chambre: 1, Studio: 2, Appartement: 3, Villa: 4, Duplex: 5 };
 
   const applyFilters = async () => {
     const params = {};
     if (selectedCity) params.ville = selectedCity;
+    else if (searchQuery) params.ville = searchQuery;
+    
     if (selectedRegion) params.region = selectedRegion;
-    if (searchQuery) params.ville = searchQuery;
     if (selectedType && selectedType !== 'Tous') params.type = typeToId[selectedType];
     if (priceRange.min) params.prix_min = priceRange.min;
     if (priceRange.max) params.prix_max = priceRange.max;

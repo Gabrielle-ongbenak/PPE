@@ -1,17 +1,47 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
-import Logo from '../components/Logo';
-import BottomNavigation from '../components/BottomNavigation';
-import { User, Mail, Phone, MapPin, Settings, LogOut, Bell, Shield, HelpCircle, Moon, Sun } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { User, Mail, Phone, MapPin, Settings, LogOut, Bell, Shield, HelpCircle, Moon, Sun, ArrowRight } from 'lucide-react';
 
 const Profile = () => {
   const navigate = useNavigate();
   const { theme, isDarkMode, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
+    logout();
     navigate('/login');
   };
+
+  if (!user) {
+    return (
+      <div style={{ minHeight: '100vh', backgroundColor: theme.background, padding: '40px 20px', textAlign: 'center' }}>
+        <Logo size={48} />
+        <h2 style={{ color: theme.text, marginTop: 32 }}>Vous n'êtes pas connecté</h2>
+        <p style={{ color: theme.secondaryText, marginBottom: 32 }}>Connectez-vous pour voir votre profil</p>
+        <button
+          onClick={() => navigate('/login')}
+          style={{
+            backgroundColor: theme.primary,
+            color: '#fff',
+            border: 'none',
+            borderRadius: '12px',
+            padding: '16px 32px',
+            fontSize: '16px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            margin: '0 auto'
+          }}
+        >
+          Se connecter
+          <ArrowRight size={20} />
+        </button>
+        <BottomNavigation />
+      </div>
+    );
+  }
 
   const menuItems = [
     {
@@ -86,7 +116,7 @@ const Profile = () => {
           }}
         >
           <img
-            src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200"
+            src={user.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200"}
             alt="Profile"
             style={{
               width: '80px',
@@ -106,7 +136,7 @@ const Profile = () => {
                 marginBottom: '4px',
               }}
             >
-              John Doe
+              {user.fullName || user.nom || 'Utilisateur'}
             </h2>
             <p
               style={{
@@ -116,7 +146,7 @@ const Profile = () => {
                 marginBottom: '12px',
               }}
             >
-              john.doe@email.com
+              {user.email}
             </p>
             <button
               style={{
@@ -160,29 +190,29 @@ const Profile = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <User size={20} color={theme.secondaryText} style={{ minWidth: '20px' }} />
               <div>
-                <div style={{ fontSize: '13px', color: theme.secondaryText, marginBottom: '2px' }}>Nom</div>
-                <div style={{ fontSize: '15px', color: theme.text, fontWeight: '500' }}>John Doe</div>
+                <div style={{ fontSize: '13px', color: theme.secondaryText, marginBottom: '2px' }}>Nom complet</div>
+                <div style={{ fontSize: '15px', color: theme.text, fontWeight: '500' }}>{user.fullName || user.nom}</div>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <Mail size={20} color={theme.secondaryText} style={{ minWidth: '20px' }} />
               <div>
                 <div style={{ fontSize: '13px', color: theme.secondaryText, marginBottom: '2px' }}>Email</div>
-                <div style={{ fontSize: '15px', color: theme.text, fontWeight: '500' }}>john.doe@email.com</div>
+                <div style={{ fontSize: '15px', color: theme.text, fontWeight: '500' }}>{user.email}</div>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <Phone size={20} color={theme.secondaryText} style={{ minWidth: '20px' }} />
               <div>
                 <div style={{ fontSize: '13px', color: theme.secondaryText, marginBottom: '2px' }}>Téléphone</div>
-                <div style={{ fontSize: '15px', color: theme.text, fontWeight: '500' }}>+237 699 123 456</div>
+                <div style={{ fontSize: '15px', color: theme.text, fontWeight: '500' }}>{user.phone || user.telephone || 'Non renseigné'}</div>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <MapPin size={20} color={theme.secondaryText} style={{ minWidth: '20px' }} />
               <div>
                 <div style={{ fontSize: '13px', color: theme.secondaryText, marginBottom: '2px' }}>Localisation</div>
-                <div style={{ fontSize: '15px', color: theme.text, fontWeight: '500' }}>Yaoundé, Centre</div>
+                <div style={{ fontSize: '15px', color: theme.text, fontWeight: '500' }}>{user.agencyName || 'Yaoundé, Centre'}</div>
               </div>
             </div>
           </div>

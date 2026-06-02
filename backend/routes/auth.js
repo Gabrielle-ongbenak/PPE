@@ -159,9 +159,9 @@ router.post('/login/agent', (req, res) => {
     }
 
     const agent = results[0];
-    if (agent.statut !== 'valide') {
+    if (agent.statut === 'rejete') {
       return res.status(403).json({
-        message: 'Compte en attente de validation ou non approuvé.',
+        message: 'Compte rejeté par l\'administrateur.',
         status: agent.statut,
       });
     }

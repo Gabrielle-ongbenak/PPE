@@ -14,6 +14,8 @@ const Home = () => {
   const [housingData, setHousingData] = useState(mockHousingData);
   const [loading, setLoading] = useState(true);
 
+  const [selectedCategory, setSelectedCategory] = useState('Tous');
+
   useEffect(() => {
     propertiesApi
       .search()
@@ -38,6 +40,16 @@ const Home = () => {
       )
     );
   };
+
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const handleNotificationClick = () => {
+    setShowNotifications(!showNotifications);
+  };
+
+  const filteredData = selectedCategory === 'Tous'
+    ? housingData
+    : housingData.filter(h => h.type.includes(selectedCategory.replace('s', ''))); // Simple matches for Studio, Appartement, etc.
 
   return (
     <div
@@ -67,7 +79,7 @@ const Home = () => {
           }}
         >
           <Logo size={32} />
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '12px', position: 'relative' }}>
             <button
               onClick={() => navigate('/assistant')}
               style={{
@@ -84,6 +96,7 @@ const Home = () => {
               <Bot size={20} color={theme.primary} />
             </button>
             <button
+              onClick={handleNotificationClick}
               style={{
                 backgroundColor: theme.primary + '15',
                 border: 'none',
@@ -109,6 +122,32 @@ const Home = () => {
                 }}
               />
             </button>
+
+            {/* Notification Dropdown */}
+            {showNotifications && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '48px',
+                  right: 0,
+                  width: '260px',
+                  backgroundColor: theme.surface,
+                  border: `1px solid ${theme.border}`,
+                  borderRadius: '12px',
+                  padding: '16px',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                  zIndex: 200,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span style={{ fontWeight: '600', fontSize: '14px' }}>Notifications</span>
+                  {/* <span style={{ color: theme.primary, fontSize: '12px', cursor: 'pointer' }}>Tout marquer lu</span> */}
+                </div>
+                <div style={{ padding: '8px 0', textAlign: 'center', color: theme.secondaryText, fontSize: '13px' }}>
+                  Vous n'avez pas de nouvelles notifications pour le moment.
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -195,7 +234,7 @@ const Home = () => {
               color: theme.secondaryText,
             }}
           >
-            {housingData.length} logements disponibles
+            {filteredData.length} logements disponibles
           </p>
         </div>
 
@@ -212,10 +251,11 @@ const Home = () => {
           {['Tous', 'Studios', 'Appartements', 'Villas', 'Chambres'].map((filter) => (
             <button
               key={filter}
+              onClick={() => setSelectedCategory(filter)}
               style={{
-                backgroundColor: filter === 'Tous' ? theme.primary : theme.surface,
-                color: filter === 'Tous' ? '#FFFFFF' : theme.text,
-                border: filter === 'Tous' ? 'none' : `1px solid ${theme.border}`,
+                backgroundColor: filter === selectedCategory ? theme.primary : theme.surface,
+                color: filter === selectedCategory ? '#FFFFFF' : theme.text,
+                border: filter === selectedCategory ? 'none' : `1px solid ${theme.border}`,
                 borderRadius: '20px',
                 padding: '10px 20px',
                 fontSize: '14px',
@@ -238,7 +278,7 @@ const Home = () => {
             gap: '20px',
           }}
         >
-          {housingData.map((housing) => (
+          {filteredData.map((housing) => (
             <HousingCard
               key={housing.id}
               housing={housing}

@@ -54,6 +54,16 @@ export const propertiesApi = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+  update: (id, payload) =>
+    apiRequest(`/api/publications/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  toggleStatut: (id, statut) =>
+    apiRequest(`/api/publications/${id}/statut`, {
+      method: 'PUT',
+      body: JSON.stringify({ statut }),
+    }),
   remove: (id) =>
     apiRequest(`/api/publications/${id}`, { method: 'DELETE' }),
 };
@@ -92,6 +102,19 @@ export const adminApi = {
     apiRequest(`/api/admin/subscriptions/agents/${agentId}`, {
       method: 'POST',
       body: JSON.stringify({ plan, referencePaiement }),
+    }),
+};
+
+export const messagesApi = {
+  getConversations: async () => {
+    const res = await apiRequest('/api/messages');
+    return { conversations: res.messages || [] };
+  },
+  getMessages: (userId) => apiRequest(`/api/messages/${userId}`),
+  send: (userId, text) =>
+    apiRequest('/api/messages', {
+      method: 'POST',
+      body: JSON.stringify({ destinataire_id: userId, contenu: text }),
     }),
 };
 

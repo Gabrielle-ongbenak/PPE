@@ -87,3 +87,17 @@ CREATE TABLE clients(
     telephone VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    expediteur_id INT NOT NULL,
+    expediteur_type ENUM('agent', 'client') NOT NULL,
+    destinataire_id INT NOT NULL,
+    destinataire_type ENUM('agent', 'client') NOT NULL,
+    logement_id INT NULL,
+    contenu TEXT NOT NULL,
+    est_lu BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (logement_id) REFERENCES logements(id) ON DELETE SET NULL
+);

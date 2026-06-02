@@ -1,89 +1,76 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import Logo from '../components/Logo';
 import BottomNavigation from '../components/BottomNavigation';
 import { Search, MoreVertical, Send, ArrowLeft } from 'lucide-react';
+import { messagesApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const Messages = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
+  const { user } = useAuth();
   const [selectedChat, setSelectedChat] = useState(null);
   const [messageText, setMessageText] = useState('');
+  const [conversations, setConversations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const conversations = [
-    {
-      id: 1,
-      name: 'Jean Dupont',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100',
-      lastMessage: 'Bonjour, le logement est toujours disponible ?',
-      time: '14:30',
-      unread: 2,
-      online: true,
-      messages: [
-        { id: 1, text: 'Bonjour, je suis intéressé par votre studio', sent: false, time: '14:25' },
-        { id: 2, text: 'Oui, il est toujours disponible', sent: true, time: '14:27' },
-        { id: 3, text: 'Le logement est toujours disponible ?', sent: false, time: '14:30' },
-      ]
-    },
-    {
-      id: 2,
-      name: 'Marie Kouame',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
-      lastMessage: 'Merci pour votre réponse !',
-      time: '12:15',
-      unread: 0,
-      online: false,
-      messages: [
-        { id: 1, text: 'Bonjour, pouvez-vous me donner plus de détails ?', sent: false, time: '12:00' },
-        { id: 2, text: 'Bien sûr, l\'appartement a 3 chambres et 2 salles de bain', sent: true, time: '12:10' },
-        { id: 3, text: 'Merci pour votre réponse !', sent: false, time: '12:15' },
-      ]
-    },
-    {
-      id: 3,
-      name: 'Paul Nkodo',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
-      lastMessage: 'Je peux visiter demain ?',
-      time: 'Hier',
-      unread: 1,
-      online: true,
-      messages: [
-        { id: 1, text: 'La villa me plaît beaucoup', sent: false, time: 'Hier 18:00' },
-        { id: 2, text: 'Je peux visiter demain ?', sent: false, time: 'Hier 18:05' },
-      ]
-    },
-    {
-      id: 4,
-      name: 'Aminatou Ahmadou',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100',
-      lastMessage: 'C\'est noté, merci',
-      time: 'Hier',
-      unread: 0,
-      online: false,
-      messages: [
-        { id: 1, text: 'Le prix est-il négociable ?', sent: false, time: 'Hier 10:00' },
-        { id: 2, text: 'Oui, nous pouvons discuter', sent: true, time: 'Hier 10:15' },
-        { id: 3, text: 'C\'est noté, merci', sent: false, time: 'Hier 10:20' },
-      ]
-    },
-  ];
+  const loadConversations = async () => {
+    try {
+      const res = await messagesApi.getConversations();
+      // Map API response to UI structure
+      const chats = res.conversations.map(c => ({
+        id: c.autre_utilisateur_id,
+        name: c.autre_utilisateur_nom || 'Utilisateur',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100',
+        lastMessage: c.dernier_message,
+        time: new Date(c.date_dernier_message).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        unread: 0,
+        online: false,
+        messages: [] // Will fetch on selection
+      }));
+      setConversations(chats);
+    } catch (err) {
+      console.error('Failed to load conversations', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleSendMessage = () => {
+  useEffect(() => {
+    loadConversations();
+  }, []);
+
+  const handleSelectChat = async (chat) => {
+    try {
+      const res = await messagesApi.getMessages(chat.id);
+      const messages = res.messages.map(m => ({
+        id: m.id,
+        text: m.contenu,
+        sent: m.expediteur_id === user.id,
+        time: new Date(m.date_envoi).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+      }));
+      setSelectedChat({ ...chat, messages });
+    } catch (err) {
+      console.error('Failed to load messages', err);
+      setSelectedChat(chat);
+    }
+  };
+
+  const handleSendMessage = async () => {
     if (messageText.trim() && selectedChat) {
-      const newMessage = {
-        id: selectedChat.messages.length + 1,
-        text: messageText,
-        sent: true,
-        time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-      };
-      setSelectedChat({
-        ...selectedChat,
-        messages: [...selectedChat.messages, newMessage],
-        lastMessage: messageText,
-        time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-      });
+      const text = messageText;
       setMessageText('');
+      try {
+        await messagesApi.send(selectedChat.id, text);
+        // Optimistic update or reload
+        handleSelectChat(selectedChat);
+        loadConversations();
+      } catch (err) {
+        console.error('Failed to send message', err);
+        alert('Erreur lors de l\'envoi du message');
+      }
     }
   };
 
@@ -352,7 +339,7 @@ const Messages = () => {
         {conversations.map((conversation) => (
           <div
             key={conversation.id}
-            onClick={() => setSelectedChat(conversation)}
+            onClick={() => handleSelectChat(conversation)}
             style={{
               padding: '16px 20px',
               backgroundColor: theme.surface,
