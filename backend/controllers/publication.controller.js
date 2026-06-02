@@ -1,26 +1,68 @@
 const Publication = require('../models/Publication');
+const Photo = require('../models/Photo');
+const Agent = require('../models/Agent');
+const { getActiveAgentIds } = require('../utils/activeAgents');
+
+const mapPublication = async (publication) => {
+  const plain = publication.toJSON ? publication.toJSON() : publication;
+  const photos = await Photo.findAll({ where: { publication_id: plain.id } });
+  const agent = await Agent.findByPk(plain.id_agent, {
+    attributes: ['id', 'nom', 'email', 'telephone', 'nom_agence'],
+  });
+  return {
+    ...plain,
+    title: plain.titre || `${plain.ville} - ${plain.quartier}`,
+    description: plain.descriptions,
+    location: plain.ville,
+    region: plain.region,
+    district: plain.quartier,
+    bedrooms: plain.chambres,
+    bathrooms: plain.salles_bain,
+    area: plain.surface_m2,
+    images: photos.map((p) => p.url_media),
+    agent: agent ? {
+      id: agent.id,
+      name: agent.nom,
+      email: agent.email,
+      phone: agent.telephone,
+      agencyName: agent.nom_agence,
+    } : null,
+  };
+};
 
 // CRÉER une publication
 const creerPublication = async (req, res) => {
   try {
     const id_agent = req.user.id;
     const {
+      titre,
+      title,
       id_type,
       ville,
       quartier,
+      region,
       adresse_map,
       prix,
       descriptions,
+      description,
+      chambres,
+      salles_bain,
+      surface_m2,
     } = req.body;
 
     const publication = await Publication.create({
       id_agent,
+      titre: titre || title,
       id_type: id_type || 1,
       ville,
       quartier,
+      region,
       adresse_map,
       prix,
-      descriptions,
+      descriptions: descriptions || description,
+      chambres: chambres || 1,
+      salles_bain: salles_bain || 1,
+      surface_m2,
     });
 
     return res.status(201).json({
@@ -60,7 +102,14 @@ const voirPublication = async (req, res) => {
     if (!publication) {
       return res.status(404).json({ message: ' Logement introuvable' });
     }
-    return res.status(200).json({ message: ' Logement trouvé', publication });
+
+    const activeAgentIds = await getActiveAgentIds();
+    if (!activeAgentIds.includes(publication.id_agent)) {
+      return res.status(404).json({ message: ' Logement non disponible' });
+    }
+
+    const mapped = await mapPublication(publication);
+    return res.status(200).json({ message: ' Logement trouvé', publication: mapped });
   } catch (error) {
     console.error('Erreur voirPublication :', error.message);
     return res.status(500).json({ message: ' Erreur serveur', erreur: error.message });
@@ -177,6 +226,10 @@ const rechercherLogements = async (req, res) => {
       conditions.quartier = { [Op.like]: `%${quartier}%` };
     }
 
+    if (req.query.region) {
+      conditions.region = { [Op.like]: `%${req.query.region}%` };
+    }
+
     // Filtre par type de logement
     if (type) {
       conditions.id_type = type;
@@ -201,16 +254,27 @@ const rechercherLogements = async (req, res) => {
     // Filtre par statut (par défaut on montre que les disponibles)
     conditions.statut = statut || 'disponible';
 
-    // On cherche dans la BD avec les conditions
+    const activeAgentIds = await getActiveAgentIds();
+    if (activeAgentIds.length === 0) {
+      return res.status(200).json({
+        message: 'Résultats de recherche',
+        total: 0,
+        logements: [],
+      });
+    }
+    conditions.id_agent = { [Op.in]: activeAgentIds };
+
     const logements = await Publication.findAll({
       where: conditions,
-      order: [['id', 'DESC']], // les plus récents en premier
+      order: [['id', 'DESC']],
     });
+
+    const mapped = await Promise.all(logements.map((l) => mapPublication(l)));
 
     return res.status(200).json({
       message: 'Résultats de recherche',
-      total: logements.length,
-      logements,
+      total: mapped.length,
+      logements: mapped,
     });
 
   } catch (error) {

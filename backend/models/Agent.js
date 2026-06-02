@@ -22,6 +22,10 @@ const Agent = sequelize.define('Agent', {
     type: DataTypes.STRING(20),
     allowNull: false,
   },
+  nom_agence: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+  },
   documents_path: {
     type: DataTypes.TEXT,
     allowNull: true,

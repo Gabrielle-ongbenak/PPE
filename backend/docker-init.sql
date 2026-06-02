@@ -1,13 +1,11 @@
--- DROP DATABASE IF EXISTS logi_cam;
-CREATE DATABASE logi_cam;
-USE logi_cam;
+-- Init Docker MySQL (sans CREATE DATABASE — déjà créé par MYSQL_DATABASE)
 
-CREATE TABLE types_logement(       
+CREATE TABLE IF NOT EXISTS types_logement(       
     id INT AUTO_INCREMENT PRIMARY KEY,
     nom ENUM('chambre','studio','appartement') NOT NULL
 );
 
-CREATE TABLE agents(
+CREATE TABLE IF NOT EXISTS agents(
     id INT AUTO_INCREMENT PRIMARY KEY,
     nom VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE,
@@ -17,10 +15,10 @@ CREATE TABLE agents(
     documents_path TEXT,
     statut ENUM('valide','rejete','en_attente') DEFAULT 'en_attente',
     use_role ENUM('agent','admin') NOT NULL,
-    created_at TIMESTAMP DEFAULT  CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE logements (
+CREATE TABLE IF NOT EXISTS logements (
     id INT AUTO_INCREMENT PRIMARY KEY,
     titre VARCHAR(255) NULL,
     id_agent INT NOT NULL,
@@ -36,22 +34,20 @@ CREATE TABLE logements (
     surface_m2 DECIMAL(10,2) NULL,
     statut ENUM('disponible','occupe') DEFAULT 'disponible',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
     FOREIGN KEY (id_agent) REFERENCES agents(id),
     FOREIGN KEY (id_type) REFERENCES types_logement(id)
 );
 
-CREATE TABLE medias (
+CREATE TABLE IF NOT EXISTS medias (
     id INT AUTO_INCREMENT PRIMARY KEY,
     publication_id INT NOT NULL,
     url_media TEXT NOT NULL,
     type_media ENUM('photo','video') DEFAULT 'photo',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
     FOREIGN KEY(publication_id) REFERENCES logements(id)
 );
 
-CREATE TABLE abonnements(
+CREATE TABLE IF NOT EXISTS abonnements(
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_agent INT NOT NULL,
     plan ENUM('basic','pro','premium') DEFAULT 'basic',
@@ -60,11 +56,10 @@ CREATE TABLE abonnements(
     montant DECIMAL(10,2) NOT NULL,
     statut ENUM('actif','expire') DEFAULT 'actif',
     reference_paiement VARCHAR(255) NOT NULL,
-
     FOREIGN KEY(id_agent) REFERENCES agents(id)
 );
 
-CREATE TABLE contact_messages (
+CREATE TABLE IF NOT EXISTS contact_messages (
     id INT AUTO_INCREMENT PRIMARY KEY,
     property_id INT NOT NULL,
     agent_id INT NOT NULL,
@@ -77,13 +72,4 @@ CREATE TABLE contact_messages (
     FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE
 );
 
-INSERT INTO types_logement (nom) VALUES ('chambre'), ('studio'), ('appartement');
-
-CREATE TABLE clients(
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nom VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE,
-    mot_de_passe VARCHAR(255) NOT NULL,
-    telephone VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+INSERT IGNORE INTO types_logement (id, nom) VALUES (1, 'chambre'), (2, 'studio'), (3, 'appartement');

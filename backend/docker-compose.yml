@@ -1,31 +1,38 @@
 version: '3.8'
 
 services:
-  # Notre serveur Express
-  backend:
-    build: ./backend
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
+  mysql:
+    image: mysql:8.0
     environment:
-      - PORT=5000
-    networks:
-      - ppe-network
-
-  # Notre application React (Vite)
-  frontend:
-    build: ./frontend
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: logi_cam
+      MYSQL_USER: logicam
+      MYSQL_PASSWORD: logicam
     ports:
-      - "5173:5173"
+      - "3307:3306"
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    stdin_open: true # Nécessaire pour que Vite ne s'arrête pas tout seul
-    networks:
-      - ppe-network
+      - ./docker-init.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-networks:
-  ppe-network:
-    driver: bridge
+  backend:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: mysql
+      DB_USER: logicam
+      DB_PASSWORD: logicam
+      DB_NAME: logi_cam
+      DB_PORT: 3306
+      PORT: 3000
+      JWT_SECRET: unechainedecaracteresecrete123
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules

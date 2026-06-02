@@ -7,6 +7,10 @@ const Publication = sequelize.define('Publication', {
     primaryKey: true,
     autoIncrement: true,
   },
+  titre: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+  },
   id_agent: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -23,6 +27,22 @@ const Publication = sequelize.define('Publication', {
   quartier: {
     type: DataTypes.STRING(60),
     allowNull: false,
+  },
+  region: {
+    type: DataTypes.STRING(60),
+    allowNull: true,
+  },
+  chambres: {
+    type: DataTypes.INTEGER,
+    defaultValue: 1,
+  },
+  salles_bain: {
+    type: DataTypes.INTEGER,
+    defaultValue: 1,
+  },
+  surface_m2: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
   },
   adresse_map: {
     type: DataTypes.STRING(255),
