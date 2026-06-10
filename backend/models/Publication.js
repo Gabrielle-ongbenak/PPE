@@ -60,6 +60,18 @@ const Publication = sequelize.define('Publication', {
     type: DataTypes.ENUM('disponible', 'occupe'),
     defaultValue: 'disponible',
   },
+  publication_status: {
+    type: DataTypes.ENUM('en_attente', 'valide', 'rejete'),
+    defaultValue: 'en_attente',
+  },
+  amenities: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  note_avis: {
+    type: DataTypes.DECIMAL(2, 1),
+    defaultValue: 0.0,
+  },
 }, {
   tableName: 'logements',
   timestamps: false,

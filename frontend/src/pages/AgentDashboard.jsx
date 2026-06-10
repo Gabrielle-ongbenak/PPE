@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { propertiesApi, subscriptionApi } from '../services/api';
-import { Plus, Edit2, Trash2, CheckCircle, XCircle, Home, MapPin, Tag } from 'lucide-react';
+import { Plus, Edit2, Trash2, CheckCircle, XCircle, Home, MapPin, Tag, MessageSquare } from 'lucide-react';
 
 const AgentDashboard = () => {
   const { theme } = useTheme();
@@ -13,13 +13,16 @@ const AgentDashboard = () => {
   const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   // Forms
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
     titre: '', ville: '', quartier: '', region: '', prix: '', descriptions: '', chambres: 1, salles_bain: 1, surface_m2: '',
+    id_type: 3, // Default to appartement
+    amenities: [],
   });
+  const [selectedPhotos, setSelectedPhotos] = useState([]);
 
   const load = async () => {
     try {
@@ -38,12 +41,27 @@ const AgentDashboard = () => {
   };
 
   useEffect(() => {
-    if (!user || user.role !== 'agent') {
+    // Vérifie le token directement
+    const token = localStorage.getItem('logitech_token');
+    if (!token) {
       navigate('/agent/login');
       return;
     }
-    load();
-  }, [user, navigate]);
+
+    // Décode le token
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.role !== 'agent') {
+        navigate('/agent/login');
+        return;
+      }
+    } catch (e) {
+      navigate('/agent/login');
+      return;
+    }
+
+    load().catch((err) => setError(err.message));
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,21 +72,38 @@ const AgentDashboard = () => {
         chambres: Number(form.chambres),
         salles_bain: Number(form.salles_bain),
         surface_m2: Number(form.surface_m2),
-        id_type: 3, // Default to appartement for now, can be improved
+        amenities: form.amenities.join(','),
       };
 
+      let res;
       if (editingId) {
-        await propertiesApi.update(editingId, payload);
+        res = await propertiesApi.update(editingId, payload);
       } else {
-        await propertiesApi.create(payload);
+        res = await propertiesApi.create(payload);
       }
-      
-      setForm({ titre: '', ville: '', quartier: '', region: '', prix: '', descriptions: '', chambres: 1, salles_bain: 1, surface_m2: '' });
+
+      // Handle photo upload if any
+      if (selectedPhotos.length > 0) {
+        const id = editingId || res.publication.id;
+        const formData = new FormData();
+        Array.from(selectedPhotos).forEach(file => {
+          formData.append('photos', file);
+        });
+        await propertiesApi.uploadPhotos(id, formData);
+      }
+
+      setForm({ titre: '', ville: '', quartier: '', region: '', prix: '', descriptions: '', chambres: 1, salles_bain: 1, surface_m2: '', id_type: 3, amenities: [] });
+      setSelectedPhotos([]);
       setEditingId(null);
       setIsAdding(false);
-      load();
+
+      toast.success(editingId ? 'Annonce modifiée !' : 'Annonce créée ! En attente de validation.');
+      await load();
+
+      // Petit délai pour assurer que la DB est synchro
+      setTimeout(() => load(), 500);
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -83,9 +118,12 @@ const AgentDashboard = () => {
       chambres: l.chambres || 1,
       salles_bain: l.salles_bain || 1,
       surface_m2: l.surface_m2 || '',
+      id_type: l.id_type || 3,
+      amenities: l.amenities ? (Array.isArray(l.amenities) ? l.amenities : l.amenities.split(',')) : [],
     });
     setEditingId(l.id);
     setIsAdding(true);
+    setSelectedPhotos([]);
   };
 
   const handleDelete = async (id) => {
@@ -118,15 +156,32 @@ const AgentDashboard = () => {
           <p style={{ margin: '4px 0 0', color: theme.secondaryText }}>Bienvenue, {user?.fullName}</p>
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
-          <button 
-            onClick={() => { setIsAdding(!isAdding); if(!isAdding) { setEditingId(null); setForm({titre: '', ville: '', quartier: '', region: '', prix: '', descriptions: '', chambres: 1, salles_bain: 1, surface_m2: ''}); } }} 
+          <button
+            onClick={() => { setIsAdding(!isAdding); if (!isAdding) { setEditingId(null); setForm({ titre: '', ville: '', quartier: '', region: '', prix: '', descriptions: '', chambres: 1, salles_bain: 1, surface_m2: '', id_type: 3, amenities: [] }); } }}
             style={{ display: 'flex', alignItems: 'center', gap: 8, border: 'none', background: theme.primary, color: '#fff', padding: '10px 20px', borderRadius: 12, fontWeight: 600, cursor: 'pointer' }}
           >
             {isAdding ? 'Annuler' : <><Plus size={20} /> Nouvelle annonce</>}
           </button>
-          <button onClick={() => { logout(); navigate('/agent/login'); }} style={{ border: `1px solid ${theme.border}`, background: theme.surface, color: theme.text, padding: '10px 20px', borderRadius: 12, fontWeight: 600, cursor: 'pointer' }}>Déconnexion</button>
+          <button
+            onClick={() => navigate('/messages')}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, border: `1px solid ${theme.border}`, background: theme.surface, color: theme.text, padding: '10px 20px', borderRadius: 12, fontWeight: 600, cursor: 'pointer' }}
+          >
+            <MessageSquare size={20} /> Messages
+          </button>
+          <button
+            onClick={() => { logout(); window.location.href = '/login'; }}
+            style={{ border: `1px solid ${theme.border}`, background: theme.surface, color: theme.text, padding: '10px 20px', borderRadius: 12, fontWeight: 600, cursor: 'pointer' }}
+          >
+            Déconnexion
+          </button>
         </div>
       </div>
+
+      {loading && listings.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '40px' }}>
+          <p style={{ color: theme.secondaryText }}>Chargement de vos annonces...</p>
+        </div>
+      )}
 
       {error && <p style={{ backgroundColor: '#fee2e2', color: '#ef4444', padding: 12, borderRadius: 8, marginBottom: 20 }}>{error}</p>}
 
@@ -147,12 +202,58 @@ const AgentDashboard = () => {
               <input placeholder="Quartier" value={form.quartier} onChange={(e) => setForm({ ...form, quartier: e.target.value })} required style={{ width: '100%', padding: 12, borderRadius: 10, border: `1px solid ${theme.border}`, background: theme.background, color: theme.text }} />
             </div>
             <div>
+              <label style={{ display: 'block', fontSize: 13, color: theme.secondaryText, marginBottom: 4 }}>Type de logement</label>
+              <select
+                value={form.id_type}
+                onChange={(e) => setForm({ ...form, id_type: Number(e.target.value) })}
+                style={{ width: '100%', padding: 12, borderRadius: 10, border: `1px solid ${theme.border}`, background: theme.background, color: theme.text }}
+              >
+                <option value={1}>Chambre</option>
+                <option value={2}>Studio</option>
+                <option value={3}>Appartement</option>
+                <option value={4}>Villa</option>
+                <option value={5}>Duplex</option>
+              </select>
+            </div>
+            <div>
               <label style={{ display: 'block', fontSize: 13, color: theme.secondaryText, marginBottom: 4 }}>Prix (FCFA)</label>
               <input type="number" placeholder="Prix" value={form.prix} onChange={(e) => setForm({ ...form, prix: e.target.value })} required style={{ width: '100%', padding: 12, borderRadius: 10, border: `1px solid ${theme.border}`, background: theme.background, color: theme.text }} />
             </div>
             <div>
+              <label style={{ display: 'block', fontSize: 13, color: theme.secondaryText, marginBottom: 4 }}>Chambres</label>
+              <input type="number" value={form.chambres} onChange={(e) => setForm({ ...form, chambres: e.target.value })} style={{ width: '100%', padding: 12, borderRadius: 10, border: `1px solid ${theme.border}`, background: theme.background, color: theme.text }} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 13, color: theme.secondaryText, marginBottom: 4 }}>Salles de bain</label>
+              <input type="number" value={form.salles_bain} onChange={(e) => setForm({ ...form, salles_bain: e.target.value })} style={{ width: '100%', padding: 12, borderRadius: 10, border: `1px solid ${theme.border}`, background: theme.background, color: theme.text }} />
+            </div>
+            <div>
               <label style={{ display: 'block', fontSize: 13, color: theme.secondaryText, marginBottom: 4 }}>Surface (m²)</label>
               <input type="number" placeholder="Surface" value={form.surface_m2} onChange={(e) => setForm({ ...form, surface_m2: e.target.value })} style={{ width: '100%', padding: 12, borderRadius: 10, border: `1px solid ${theme.border}`, background: theme.background, color: theme.text }} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 13, color: theme.secondaryText, marginBottom: 4 }}>Photos</label>
+              <input type="file" multiple onChange={(e) => setSelectedPhotos(e.target.files)} style={{ width: '100%', padding: 8, fontSize: 12 }} />
+            </div>
+            <div style={{ gridColumn: 'span 2' }}>
+              <label style={{ display: 'block', fontSize: 13, color: theme.secondaryText, marginBottom: 8 }}>Équipements</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                {['WiFi', 'Sécurité', 'Parking', 'Climatisation', 'Cuisine équipée', 'Balcon'].map(amenity => (
+                  <label key={amenity} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 14 }}>
+                    <input
+                      type="checkbox"
+                      checked={form.amenities.includes(amenity)}
+                      onChange={(e) => {
+                        const newAmenities = e.target.checked
+                          ? [...form.amenities, amenity]
+                          : form.amenities.filter(a => a !== amenity);
+                        setForm({ ...form, amenities: newAmenities });
+                      }}
+                    />
+                    {amenity}
+                  </label>
+                ))}
+              </div>
             </div>
             <div style={{ gridColumn: 'span 2' }}>
               <label style={{ display: 'block', fontSize: 13, color: theme.secondaryText, marginBottom: 4 }}>Description</label>
@@ -190,7 +291,7 @@ const AgentDashboard = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                   <h4 style={{ margin: 0, fontSize: 17, fontWeight: '600' }}>{l.titre || l.ville}</h4>
                   <span style={{ fontSize: 12, padding: '4px 8px', borderRadius: 8, background: l.statut === 'disponible' ? '#dcfce7' : '#fee2e2', color: l.statut === 'disponible' ? '#166534' : '#991b1b', fontWeight: 600 }}>
-                    {l.statut.toUpperCase()}
+                    {(l.statut || 'en_attente').toUpperCase()}
                   </span>
                 </div>
                 <div style={{ display: 'flex', gap: 16, color: theme.secondaryText, fontSize: 14, marginBottom: 16 }}>

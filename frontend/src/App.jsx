@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import { Toaster } from 'react-hot-toast';
 import Splash from './pages/Splash';
 import Onboarding from './pages/Onboarding';
 import Login from './pages/Login';
@@ -23,26 +24,27 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Splash />} />
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/housing/:id" element={<HousingDetail />} />
-          <Route path="/favorites" element={<Favorites />} />
-          <Route path="/messages" element={<Messages />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/assistant" element={<Assistant />} />
-          <Route path="/agent/login" element={<AgentLogin />} />
-          <Route path="/agent/register" element={<AgentRegister />} />
-          <Route path="/agent/dashboard" element={<AgentDashboard />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        </Routes>
-      </Router>
+        <Toaster position="top-center" reverseOrder={false} />
+        <Router>
+          <Routes>
+            <Route path="/" element={<Splash />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/housing/:id" element={<HousingDetail />} />
+            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/assistant" element={<Assistant />} />
+            <Route path="/agent/login" element={<AgentLogin />} />
+            <Route path="/agent/register" element={<AgentRegister />} />
+            <Route path="/agent/dashboard" element={<AgentDashboard />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          </Routes>
+        </Router>
       </AuthProvider>
     </ThemeProvider>
   );

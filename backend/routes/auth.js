@@ -176,24 +176,134 @@ router.post('/login/agent', (req, res) => {
   });
 });
 
-router.get('/me', authMiddleware, (req, res) => {
-  const sql = 'SELECT id, nom, email, telephone, nom_agence, statut, use_role FROM agents WHERE id = ?';
-  db.query(sql, [req.user.id], (err, results) => {
-    if (err || results.length === 0) {
-      return res.status(404).json({ message: 'Utilisateur introuvable.' });
+router.post('/register/client', (req, res) => {
+  const { nom, email, mot_de_passe, telephone, name, password, phone } = req.body;
+  const clientName = nom || name;
+  const clientPassword = mot_de_passe || password;
+  const clientPhone = telephone || phone;
+
+  if (!clientName || !email || !clientPassword || !clientPhone) {
+    return res.status(400).json({ message: 'Tous les champs obligatoires doivent être remplis.' });
+  }
+
+  const hash = bcrypt.hashSync(clientPassword, 10);
+  const sql = 'INSERT INTO clients (nom, email, mot_de_passe, telephone) VALUES (?, ?, ?, ?)';
+
+  db.query(sql, [clientName, email, hash, clientPhone], (err) => {
+    if (err) {
+      if (err.code === 'ER_DUP_ENTRY') {
+        return res.status(400).json({ message: 'Cet email est déjà utilisé.' });
+      }
+      return res.status(500).json({ message: 'Erreur serveur.', erreur: err.message });
     }
-    const u = results[0];
+    return res.status(201).json({ message: 'Inscription client réussie.' });
+  });
+});
+
+router.post('/login/client', (req, res) => {
+  const { email, password, mot_de_passe } = req.body;
+  const pwd = password || mot_de_passe;
+
+  if (!email || !pwd) {
+    return res.status(400).json({ message: 'Email et mot de passe obligatoires.' });
+  }
+
+  const sql = 'SELECT * FROM clients WHERE email = ?';
+  db.query(sql, [email], (err, results) => {
+    if (err) return res.status(500).json({ message: 'Erreur serveur.' });
+    if (results.length === 0) {
+      return res.status(401).json({ message: 'Email ou mot de passe incorrect.' });
+    }
+
+    const client = results[0];
+    const valid = bcrypt.compareSync(pwd, client.mot_de_passe);
+    if (!valid) {
+      return res.status(401).json({ message: 'Email ou mot de passe incorrect.' });
+    }
+
+    const token = signToken({
+      id: client.id,
+      email: client.email,
+      role: 'client',
+    });
+
     return res.status(200).json({
+      message: 'Connexion réussie.',
+      token,
       user: {
-        id: u.id,
-        fullName: u.nom,
-        email: u.email,
-        phone: u.telephone,
-        agencyName: u.nom_agence,
-        role: u.use_role,
-        status: u.statut,
+        id: client.id,
+        fullName: client.nom,
+        email: client.email,
+        phone: client.telephone,
+        role: 'client',
       },
     });
+  });
+});
+
+router.get('/me', authMiddleware, (req, res) => {
+  if (req.user.role === 'client') {
+    const sql = 'SELECT id, nom, email, telephone FROM clients WHERE id = ?';
+    db.query(sql, [req.user.id], (err, results) => {
+      if (err || results.length === 0) {
+        return res.status(404).json({ message: 'Utilisateur introuvable.' });
+      }
+      const u = results[0];
+      return res.status(200).json({
+        user: {
+          id: u.id,
+          fullName: u.nom,
+          email: u.email,
+          phone: u.telephone,
+          role: 'client',
+        },
+      });
+    });
+  } else {
+    const sql = 'SELECT id, nom, email, telephone, nom_agence, statut, use_role FROM agents WHERE id = ?';
+    db.query(sql, [req.user.id], (err, results) => {
+      if (err || results.length === 0) {
+        return res.status(404).json({ message: 'Utilisateur introuvable.' });
+      }
+      const u = results[0];
+      return res.status(200).json({
+        user: {
+          id: u.id,
+          fullName: u.nom,
+          email: u.email,
+          phone: u.telephone,
+          agencyName: u.nom_agence,
+          role: u.use_role,
+          status: u.statut,
+        },
+      });
+    });
+  }
+});
+
+router.put('/profile', authMiddleware, (req, res) => {
+  const { fullName, phone, agencyName, password } = req.body;
+  const table = req.user.role === 'client' ? 'clients' : 'agents';
+
+  let sql = `UPDATE ${table} SET nom = ?, telephone = ?`;
+  const params = [fullName, phone];
+
+  if (req.user.role === 'agent') {
+    sql += ', nom_agence = ?';
+    params.push(agencyName);
+  }
+
+  if (password) {
+    sql += ', mot_de_passe = ?';
+    params.push(bcrypt.hashSync(password, 10));
+  }
+
+  sql += ' WHERE id = ?';
+  params.push(req.user.id);
+
+  db.query(sql, params, (err) => {
+    if (err) return res.status(500).json({ message: 'Erreur lors de la mise à jour du profil.' });
+    return res.status(200).json({ message: 'Profil mis à jour avec succès.' });
   });
 });
 

@@ -1,7 +1,7 @@
 const sendContactEmail = async ({ agentEmail, agentName, propertyTitle, visitorName, visitorEmail, visitorPhone, message }) => {
-  const subject = `[LogiCam] Nouveau message pour "${propertyTitle}"`;
+  const subject = `[Logitech] Nouveau message pour "${propertyTitle}"`;
   const body = `
-Nouveau message de contact via LogiCam
+Nouveau message de contact via Logitech
 
 Logement : ${propertyTitle}
 Agent : ${agentName} (${agentEmail})

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import Logo from '../components/Logo';
 import { ArrowLeft, Send, Bot, Sparkles, Home, Search, MapPin, Phone, Calendar } from 'lucide-react';
+import { aiApi } from '../services/api';
 
 const Assistant = () => {
   const navigate = useNavigate();
@@ -10,7 +11,7 @@ const Assistant = () => {
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: "Bonjour ! Je suis l'Assistant Logicam. Comment puis-je vous aider à trouver votre logement idéal ?",
+      text: "Bonjour ! Je suis l'Assistant Logitech. Comment puis-je vous aider à trouver votre logement idéal ?",
       sent: false,
       time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       isBot: true
@@ -35,7 +36,7 @@ const Assistant = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (inputText.trim()) {
       const userMessage = {
         id: messages.length + 1,
@@ -44,42 +45,32 @@ const Assistant = () => {
         time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
         isBot: false
       };
-      setMessages([...messages, userMessage]);
+      
+      const newMessages = [...messages, userMessage];
+      setMessages(newMessages);
       setInputText('');
       setIsTyping(true);
 
-      // Simulate bot response
-      setTimeout(() => {
-        const botResponse = generateBotResponse(inputText);
+      try {
+        const response = await aiApi.chat(newMessages);
         setMessages(prev => [...prev, {
           id: prev.length + 1,
-          text: botResponse,
+          text: response.response,
           sent: false,
           time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
           isBot: true
         }]);
+      } catch (error) {
+        setMessages(prev => [...prev, {
+          id: prev.length + 1,
+          text: "Désolé, je rencontre une erreur technique avec le serveur d'intelligence artificielle.",
+          sent: false,
+          time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+          isBot: true
+        }]);
+      } finally {
         setIsTyping(false);
-      }, 1500);
-    }
-  };
-
-  const generateBotResponse = (userQuery) => {
-    const query = userQuery.toLowerCase();
-    
-    if (query.includes('studio') || query.includes('appartement') || query.includes('villa')) {
-      return "Je peux vous aider à trouver ce type de logement ! Voulez-vous filtrer par région, prix ou autres critères spécifiques ?";
-    } else if (query.includes('prix') || query.includes('coût') || query.includes('budget')) {
-      return "Nos logements vont de 45 000 XAF à 500 000 XAF par mois. Quelle est votre fourchette de prix ?";
-    } else if (query.includes('ville') || query.includes('région')) {
-      return "Nous avons des logements dans les 10 régions du Cameroun : Centre, Littoral, Ouest, Adamaoua, Extrême-Nord, Nord, Est, Sud, Nord-Ouest et Sud-Ouest. Quelle région vous intéresse ?";
-    } else if (query.includes('visite') || query.includes('voir')) {
-      return "Je peux organiser une visite pour vous. Veuillez d'abord sélectionner un logement qui vous intéresse, puis contactez directement le propriétaire.";
-    } else if (query.includes('contact') || query.includes('téléphone')) {
-      return "Vous pouvez contacter les propriétaires directement via la section Messages ou sur la page de détail du logement.";
-    } else if (query.includes('bonjour') || query.includes('salut') || query.includes('hello')) {
-      return "Bonjour ! Comment puis-je vous aider aujourd'hui dans votre recherche de logement ?";
-    } else {
-      return "Je comprends votre demande. Pour mieux vous aider, pourriez-vous me donner plus de détails sur ce que vous cherchez ? (type de logement, budget, région, etc.)";
+      }
     }
   };
 
@@ -133,7 +124,7 @@ const Assistant = () => {
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: '16px', fontWeight: '600', color: theme.text }}>
-            Assistant Logicam
+            Assistant Logitech
           </div>
           <div style={{ fontSize: '12px', color: '#16A34A' }}>
             En ligne
@@ -182,7 +173,7 @@ const Assistant = () => {
                 >
                   <Bot size={16} color={theme.primary} />
                   <span style={{ fontSize: '12px', fontWeight: '600', color: theme.primary }}>
-                    Assistant Logicam
+                    Assistant Logitech
                   </span>
                 </div>
               )}
@@ -208,7 +199,7 @@ const Assistant = () => {
             </div>
           </div>
         ))}
-        
+
         {isTyping && (
           <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
             <div
@@ -222,7 +213,7 @@ const Assistant = () => {
               <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                 <Bot size={16} color={theme.primary} />
                 <span style={{ fontSize: '12px', fontWeight: '600', color: theme.primary, marginRight: '8px' }}>
-                  Assistant Logicam
+                  Assistant Logitech
                 </span>
                 {[0, 1, 2].map((i) => (
                   <div

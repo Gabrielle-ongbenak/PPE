@@ -76,7 +76,7 @@ const Logo = ({ size = 40, showText = true }) => {
             letterSpacing: '1px'
           }}
         >
-          Logicam
+          Logitech
         </span>
       )}
     </div>

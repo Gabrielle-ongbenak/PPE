@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
-import { contactApi } from '../services/api';
+import { messagesApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
-const ContactForm = ({ propertyId, onSuccess, onClose }) => {
+const ContactForm = ({ propertyId, agentId, onSuccess, onClose }) => {
   const { theme } = useTheme();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState({
-    visitorName: '',
-    visitorEmail: '',
-    visitorPhone: '',
     message: '',
   });
   const [loading, setLoading] = useState(false);
@@ -15,10 +16,19 @@ const ContactForm = ({ propertyId, onSuccess, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
-      await contactApi.send(propertyId, form);
+      await messagesApi.send({
+        destinataire_id: agentId,
+        destinataire_type: 'agent',
+        logement_id: propertyId,
+        contenu: form.message,
+      });
       onSuccess?.();
       onClose?.();
     } catch (err) {
@@ -43,27 +53,7 @@ const ContactForm = ({ propertyId, onSuccess, onClose }) => {
     <form onSubmit={handleSubmit}>
       <h3 style={{ margin: '0 0 16px', color: theme.text }}>Contacter l'agent</h3>
       {error && <p style={{ color: '#ef4444', fontSize: '14px' }}>{error}</p>}
-      <input
-        style={inputStyle}
-        placeholder="Votre nom"
-        value={form.visitorName}
-        onChange={(e) => setForm({ ...form, visitorName: e.target.value })}
-        required
-      />
-      <input
-        style={inputStyle}
-        type="email"
-        placeholder="Votre email"
-        value={form.visitorEmail}
-        onChange={(e) => setForm({ ...form, visitorEmail: e.target.value })}
-        required
-      />
-      <input
-        style={inputStyle}
-        placeholder="Téléphone (optionnel)"
-        value={form.visitorPhone}
-        onChange={(e) => setForm({ ...form, visitorPhone: e.target.value })}
-      />
+      {!user && <p style={{ color: theme.secondaryText, fontSize: '14px', marginBottom: '16px' }}>Vous devez être connecté pour envoyer un message.</p>}
       <textarea
         style={{ ...inputStyle, minHeight: '100px' }}
         placeholder="Votre message"
@@ -85,8 +75,9 @@ const ContactForm = ({ propertyId, onSuccess, onClose }) => {
           fontSize: '16px',
           cursor: 'pointer',
           transition: 'all 0.2s',
-          marginTop: '8px',
-          boxShadow: '0 4px 12px rgba(251, 191, 36, 0.2)',
+          marginTop: '16px',
+          boxShadow: '0 8px 20px rgba(251, 191, 36, 0.4)',
+          border: '2px solid rgba(255,255,255,0.2)',
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'translateY(-2px)';

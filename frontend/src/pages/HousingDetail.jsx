@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useTheme } from '../context/ThemeContext';
 import BottomNavigation from '../components/BottomNavigation';
 import ContactForm from '../components/ContactForm';
@@ -122,6 +123,10 @@ const HousingDetail = () => {
               <Heart size={20} fill={isFavorite ? theme.primary : 'none'} color={isFavorite ? theme.primary : theme.text} />
             </button>
             <button
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                toast.success('Lien copié !');
+              }}
               style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.9)',
                 border: 'none',
@@ -414,74 +419,36 @@ const HousingDetail = () => {
             </div>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
-            <a
-              href={housing.landlord?.phone ? `tel:${housing.landlord.phone}` : undefined}
-              style={{
-                flex: 1,
-                backgroundColor: theme.primary + '15',
-                border: 'none',
-                borderRadius: '10px',
-                padding: '14px',
-                fontSize: '15px',
-                fontWeight: '600',
-                color: theme.primary,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                textDecoration: 'none',
-              }}
-            >
-              <Phone size={18} />
-              Appeler
-            </a>
-            <button
-              type="button"
-              onClick={() => setShowContact(true)}
-              style={{
-                flex: 1,
-                backgroundColor: theme.action,
-                border: 'none',
-                borderRadius: '10px',
-                padding: '14px',
-                fontSize: '15px',
-                fontWeight: '600',
-                color: '#FFFFFF',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-              }}
-            >
-              <MessageCircle size={18} />
-              Message
-            </button>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                type="button"
+                onClick={() => setShowContact(true)}
+                style={{
+                  flex: 1,
+                  backgroundColor: theme.action,
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '14px',
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  color: '#FFFFFF',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                }}
+              >
+                <MessageCircle size={18} />
+                Message
+              </button>
+            </div>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setShowContact(true)}
-          style={{
-            width: '100%',
-            backgroundColor: theme.action,
-            border: 'none',
-            borderRadius: '12px',
-            padding: '18px',
-            fontSize: '16px',
-            fontWeight: '600',
-            color: '#FFFFFF',
-            cursor: 'pointer',
-          }}
-        >
-          Contacter l'agent par email
-        </button>
-
         {contactSent && (
           <p style={{ color: theme.primary, marginTop: 12, textAlign: 'center' }}>
-            Message envoyé ! L'agent vous répondra par email.
+            Message envoyé !
           </p>
         )}
       </div>
@@ -496,13 +463,15 @@ const HousingDetail = () => {
         >
           <div
             style={{
-              width: '100%', maxHeight: '80vh', overflow: 'auto',
+              width: '100%', maxHeight: '90vh', overflowY: 'auto',
               background: theme.surface, borderRadius: '16px 16px 0 0', padding: 24,
+              paddingBottom: 120, // Prevents bottom navigation from hiding the send button
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <ContactForm
               propertyId={id}
+              agentId={housing.landlord?.id}
               onSuccess={() => { setContactSent(true); setShowContact(false); }}
               onClose={() => setShowContact(false)}
             />

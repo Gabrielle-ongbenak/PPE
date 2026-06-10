@@ -1,15 +1,42 @@
+import React, { useState } from 'react';
+import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
+import Logo from '../components/Logo';
+import BottomNavigation from '../components/BottomNavigation';
 import { useAuth } from '../context/AuthContext';
-import { User, Mail, Phone, MapPin, Settings, LogOut, Bell, Shield, HelpCircle, Moon, Sun, ArrowRight } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Settings, LogOut, Bell, Shield, HelpCircle, Moon, Sun, ArrowRight, LayoutDashboard } from 'lucide-react';
 
 const Profile = () => {
   const navigate = useNavigate();
   const { theme, isDarkMode, toggleTheme } = useTheme();
-  const { user, logout } = useAuth();
+  const { user, loading, logout, updateProfile } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    fullName: user?.fullName || '',
+    phone: user?.phone || '',
+    agencyName: user?.agencyName || '',
+    password: ''
+  });
 
   const handleLogout = () => {
     logout();
+    toast.success('Déconnecté');
     navigate('/login');
   };
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    try {
+      await updateProfile(editForm);
+      toast.success('Profil mis à jour');
+      setIsEditing(false);
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  if (loading) return <div style={{ minHeight: '100vh', backgroundColor: theme.background }} />;
 
   if (!user) {
     return (
@@ -48,27 +75,36 @@ const Profile = () => {
       icon: Bell,
       label: 'Notifications',
       description: 'Gérer vos préférences de notification',
-      action: () => {},
+      action: () => toast.success('Notifications activées'),
     },
     {
       icon: Shield,
       label: 'Sécurité',
       description: 'Mot de passe et authentification',
-      action: () => {},
+      action: () => setIsEditing(true),
     },
     {
       icon: HelpCircle,
       label: 'Aide et support',
       description: 'FAQ et contact du support',
-      action: () => {},
+      action: () => toast.success('Contactez support@logitech.cm'),
     },
     {
       icon: Settings,
       label: 'Paramètres',
       description: 'Configuration de l\'application',
-      action: () => {},
+      action: () => toast.success('Paramètres enregistrés'),
     },
   ];
+
+  if (user.role === 'agent') {
+    menuItems.unshift({
+      icon: LayoutDashboard, // We will need to import LayoutDashboard from lucide-react
+      label: 'Espace Agent',
+      description: 'Accéder à mon tableau de bord immobilier',
+      action: () => navigate('/agent/dashboard'),
+    });
+  }
 
   return (
     <div
@@ -149,6 +185,15 @@ const Profile = () => {
               {user.email}
             </p>
             <button
+              onClick={() => {
+                setEditForm({
+                  fullName: user.fullName || user.nom || '',
+                  phone: user.phone || user.telephone || '',
+                  agencyName: user.agencyName || user.nom_agence || '',
+                  password: ''
+                });
+                setIsEditing(true);
+              }}
               style={{
                 backgroundColor: theme.primary + '15',
                 border: 'none',
@@ -370,6 +415,39 @@ const Profile = () => {
           Déconnexion
         </button>
       </div>
+
+      {/* Edit Modal */}
+      {isEditing && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'flex-end' }} onClick={() => setIsEditing(false)}>
+          <div style={{ width: '100%', background: theme.surface, borderRadius: '24px 24px 0 0', padding: 24, maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ marginTop: 0, marginBottom: 20 }}>Modifier le profil</h3>
+            <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, color: theme.secondaryText, marginBottom: 4 }}>Nom complet</label>
+                <input value={editForm.fullName} onChange={e => setEditForm({ ...editForm, fullName: e.target.value })} style={{ width: '100%', padding: 12, borderRadius: 10, border: `1px solid ${theme.border}`, background: theme.background, color: theme.text }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, color: theme.secondaryText, marginBottom: 4 }}>Téléphone</label>
+                <input value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} style={{ width: '100%', padding: 12, borderRadius: 10, border: `1px solid ${theme.border}`, background: theme.background, color: theme.text }} />
+              </div>
+              {user.role === 'agent' && (
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, color: theme.secondaryText, marginBottom: 4 }}>Nom de l'agence</label>
+                  <input value={editForm.agencyName} onChange={e => setEditForm({ ...editForm, agencyName: e.target.value })} style={{ width: '100%', padding: 12, borderRadius: 10, border: `1px solid ${theme.border}`, background: theme.background, color: theme.text }} />
+                </div>
+              )}
+              <div>
+                <label style={{ display: 'block', fontSize: 13, color: theme.secondaryText, marginBottom: 4 }}>Nouveau mot de passe (optionnel)</label>
+                <input type="password" value={editForm.password} onChange={e => setEditForm({ ...editForm, password: e.target.value })} placeholder="Laisser vide pour ne pas changer" style={{ width: '100%', padding: 12, borderRadius: 10, border: `1px solid ${theme.border}`, background: theme.background, color: theme.text }} />
+              </div>
+              <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                <button type="button" onClick={() => setIsEditing(false)} style={{ flex: 1, padding: 12, borderRadius: 10, border: `1px solid ${theme.border}`, background: 'transparent', color: theme.text, fontWeight: 600 }}>Annuler</button>
+                <button type="submit" style={{ flex: 1, padding: 12, borderRadius: 10, border: 'none', background: theme.primary, color: '#fff', fontWeight: 600 }}>Enregistrer</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Navigation */}
       <BottomNavigation />

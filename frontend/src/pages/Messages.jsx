@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import Logo from '../components/Logo';
@@ -19,17 +20,35 @@ const Messages = () => {
   const loadConversations = async () => {
     try {
       const res = await messagesApi.getConversations();
-      // Map API response to UI structure
-      const chats = res.conversations.map(c => ({
-        id: c.autre_utilisateur_id,
-        name: c.autre_utilisateur_nom || 'Utilisateur',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100',
-        lastMessage: c.dernier_message,
-        time: new Date(c.date_dernier_message).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-        unread: 0,
-        online: false,
-        messages: [] // Will fetch on selection
-      }));
+      // Group messages by participants
+      const messages = res.messages || [];
+      const groups = {};
+
+      messages.forEach(m => {
+        const otherId = m.expediteur_id === user.id ? m.destinataire_id : m.expediteur_id;
+        const otherType = m.expediteur_id === user.id ? m.destinataire_type : m.expediteur_type;
+        const key = `${otherType}_${otherId}`;
+
+        if (!groups[key]) {
+          groups[key] = {
+            id: otherId,
+            type: otherType,
+            name: m.expediteur_id === user.id ? 'Moi' : m.expediteur_nom, // Temporary logic for name
+            lastMessage: m.contenu,
+            time: new Date(m.created_at || Date.now()).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+            unread: !m.est_lu && m.destinataire_id === user.id ? 1 : 0,
+            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100',
+            online: false
+          };
+        } else {
+          if (!m.est_lu && m.destinataire_id === user.id) {
+            groups[key].unread += 1;
+          }
+          // The list is sorted by DESC usually, so first one is last message
+        }
+      });
+
+      const chats = Object.values(groups);
       setConversations(chats);
     } catch (err) {
       console.error('Failed to load conversations', err);
@@ -49,7 +68,7 @@ const Messages = () => {
         id: m.id,
         text: m.contenu,
         sent: m.expediteur_id === user.id,
-        time: new Date(m.date_envoi).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+        time: new Date(m.created_at || Date.now()).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
       }));
       setSelectedChat({ ...chat, messages });
     } catch (err) {
@@ -63,13 +82,17 @@ const Messages = () => {
       const text = messageText;
       setMessageText('');
       try {
-        await messagesApi.send(selectedChat.id, text);
+        await messagesApi.send({
+          destinataire_id: selectedChat.id,
+          destinataire_type: selectedChat.type,
+          contenu: text
+        });
         // Optimistic update or reload
         handleSelectChat(selectedChat);
         loadConversations();
       } catch (err) {
         console.error('Failed to send message', err);
-        alert('Erreur lors de l\'envoi du message');
+        toast.error('Erreur lors de l\'envoi');
       }
     }
   };

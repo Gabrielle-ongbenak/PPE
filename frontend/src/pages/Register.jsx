@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import Logo from '../components/Logo';
 import { cameroonRegions, getCitiesByRegion } from '../data/cameroonRegions';
 import { User, Mail, Lock, Eye, EyeOff, MapPin, ChevronDown, ArrowRight } from 'lucide-react';
+import { authApi } from '../services/api';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -22,10 +24,24 @@ const Register = () => {
 
   const availableCities = selectedRegion ? getCitiesByRegion(selectedRegion) : [];
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-    // Add registration logic here
-    navigate('/home');
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Les mots de passe ne correspondent pas !');
+      return;
+    }
+    try {
+      await authApi.registerClient({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+      });
+      toast.success('Compte créé avec succès !');
+      navigate('/login');
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -76,7 +92,7 @@ const Register = () => {
             color: theme.secondaryText,
           }}
         >
-          Rejoignez Logicam pour trouver votre logement idéal
+          Rejoignez Logitech pour trouver votre logement idéal
         </p>
       </div>
 

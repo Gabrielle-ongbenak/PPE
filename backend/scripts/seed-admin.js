@@ -1,9 +1,9 @@
 const bcrypt = require('bcryptjs');
 const db = require('../config/db');
 
-const email = process.env.ADMIN_EMAIL || 'admin@logicam.cm';
+const email = process.env.ADMIN_EMAIL || 'admin@logitech.cm';
 const password = process.env.ADMIN_PASSWORD || 'Admin@123';
-const name = process.env.ADMIN_NAME || 'Administrateur LogiCam';
+const name = process.env.ADMIN_NAME || 'Administrateur Logitech';
 
 const hash = bcrypt.hashSync(password, 10);
 

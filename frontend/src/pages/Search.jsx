@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import Logo from '../components/Logo';
 import BottomNavigation from '../components/BottomNavigation';
@@ -12,7 +12,8 @@ import { ArrowLeft, Search as SearchIcon, SlidersHorizontal, ChevronDown, X } fr
 const Search = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
-  const [searchQuery, setSearchQuery] = useState('');
+  const location = useLocation();
+  const [searchQuery, setSearchQuery] = useState(new URLSearchParams(location.search).get('q') || '');
   const [selectedRegion, setSelectedRegion] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedType, setSelectedType] = useState('');
@@ -29,7 +30,7 @@ const Search = () => {
     const params = {};
     if (selectedCity) params.ville = selectedCity;
     else if (searchQuery) params.ville = searchQuery;
-    
+
     if (selectedRegion) params.region = selectedRegion;
     if (selectedType && selectedType !== 'Tous') params.type = typeToId[selectedType];
     if (priceRange.min) params.prix_min = priceRange.min;

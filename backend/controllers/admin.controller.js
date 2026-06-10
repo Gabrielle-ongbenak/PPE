@@ -109,6 +109,29 @@ const tousLesLogements = async (req, res) => {
   }
 };
 
+const tousLesLogementsEnAttente = async (req, res) => {
+  try {
+    const logements = await Publication.findAll({
+      where: { publication_status: 'en_attente' },
+      order: [['id', 'DESC']],
+    });
+    // Mapper pour inclure photos et agent
+    const mapped = await Promise.all(logements.map(async (l) => {
+      const photos = await Photo.findAll({ where: { publication_id: l.id } });
+      const agent = await Agent.findByPk(l.id_agent, { attributes: ['nom', 'nom_agence'] });
+      return {
+        ...l.toJSON(),
+        images: photos.map(p => p.url_media),
+        agent_nom: agent?.nom || 'Inconnu',
+      };
+    }));
+
+    return res.status(200).json({ total: mapped.length, logements: mapped });
+  } catch (error) {
+    return res.status(500).json({ message: 'Erreur serveur', erreur: error.message });
+  }
+};
+
 // ─────────────────────────────────────────
 // SUPPRIMER un logement
 // DELETE /api/admin/logements/:id
@@ -137,6 +160,44 @@ const supprimerLogement = async (req, res) => {
 };
 
 // ─────────────────────────────────────────
+// VALIDER un logement
+// PUT /api/admin/logements/:id/valider
+// ─────────────────────────────────────────
+const validerLogement = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const logement = await Publication.findByPk(id);
+    if (!logement) {
+      return res.status(404).json({ message: ' Logement introuvable' });
+    }
+    await logement.update({ publication_status: 'valide' });
+    return res.status(200).json({ message: ' Logement validé !', logement });
+  } catch (error) {
+    console.error('Erreur validerLogement :', error.message);
+    return res.status(500).json({ message: ' Erreur serveur', erreur: error.message });
+  }
+};
+
+// ─────────────────────────────────────────
+// REJETER un logement
+// PUT /api/admin/logements/:id/rejeter
+// ─────────────────────────────────────────
+const rejeterLogement = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const logement = await Publication.findByPk(id);
+    if (!logement) {
+      return res.status(404).json({ message: ' Logement introuvable' });
+    }
+    await logement.update({ publication_status: 'rejete' });
+    return res.status(200).json({ message: ' Logement rejeté !', logement });
+  } catch (error) {
+    console.error('Erreur rejeterLogement :', error.message);
+    return res.status(500).json({ message: ' Erreur serveur', erreur: error.message });
+  }
+};
+
+// ─────────────────────────────────────────
 // STATISTIQUES GLOBALES
 // GET /api/admin/stats
 // ─────────────────────────────────────────
@@ -161,14 +222,24 @@ const statistiques = async (req, res) => {
     // Total logements
     const totalLogements = await Publication.count();
 
-    // Logements disponibles
+    // Logements disponibles (validés ET dispo)
     const logementsDisponibles = await Publication.count({
-      where: { statut: 'disponible' }
+      where: { statut: 'disponible', publication_status: 'valide' }
     });
 
     // Logements occupés
     const logementsOccupes = await Publication.count({
       where: { statut: 'occupe' }
+    });
+
+    // Logements en attente de validation
+    const logementsEnAttente = await Publication.count({
+      where: { publication_status: 'en_attente' }
+    });
+
+    // Logements validés (total)
+    const logementsValides = await Publication.count({
+      where: { publication_status: 'valide' }
     });
 
     return res.status(200).json({
@@ -181,6 +252,8 @@ const statistiques = async (req, res) => {
         },
         logements: {
           total: totalLogements,
+          valides: logementsValides,
+          en_attente: logementsEnAttente,
           disponibles: logementsDisponibles,
           occupes: logementsOccupes,
         },
@@ -200,6 +273,9 @@ module.exports = {
   validerAgent,
   rejeterAgent,
   tousLesLogements,
+  tousLesLogementsEnAttente,
   supprimerLogement,
+  validerLogement,
+  rejeterLogement,
   statistiques,
 };

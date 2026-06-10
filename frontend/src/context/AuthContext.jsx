@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('logicam_token');
+    const token = localStorage.getItem('logitech_token');
     if (!token) {
       setLoading(false);
       return;
@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
       .me()
       .then((res) => setUser(res.user))
       .catch(() => {
-        localStorage.removeItem('logicam_token');
+        localStorage.removeItem('logitech_token');
         setUser(null);
       })
       .finally(() => setLoading(false));
@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const res = await authApi.login(email, password);
-    localStorage.setItem('logicam_token', res.token);
+    localStorage.setItem('logitech_token', res.token);
     setUser(res.user);
     return res;
   };
@@ -33,22 +33,29 @@ export const AuthProvider = ({ children }) => {
   const loginAgent = async (email, password) => {
     try {
       const res = await authApi.loginAgent(email, password);
-      localStorage.setItem('logicam_token', res.token);
+      localStorage.setItem('logitech_token', res.token);
       const me = await authApi.me();
       setUser(me.user);
       return me;
     } catch (err) {
-      throw err; // Re-throw to be caught by the component
+      throw err;
     }
   };
 
+  const updateProfile = async (payload) => {
+    const res = await authApi.updateProfile(payload);
+    const me = await authApi.me();
+    setUser(me.user);
+    return res;
+  };
+
   const logout = () => {
-    localStorage.removeItem('logicam_token');
+    localStorage.removeItem('logitech_token');
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginAgent, logout, setUser }}>
+    <AuthContext.Provider value={{ user, loading, login, loginAgent, logout, setUser, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

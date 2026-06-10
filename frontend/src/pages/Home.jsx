@@ -177,6 +177,11 @@ const Home = () => {
             <input
               type="text"
               placeholder="Rechercher un logement..."
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  navigate(`/search?q=${e.target.value}`);
+                }
+              }}
               style={{
                 width: '100%',
                 padding: '14px 14px 14px 44px',

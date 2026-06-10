@@ -6,8 +6,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: logi_cam
-      MYSQL_USER: logicam
-      MYSQL_PASSWORD: logicam
+      MYSQL_USER: logitech
+      MYSQL_PASSWORD: logitech
     ports:
       - "3307:3306"
     volumes:
@@ -24,8 +24,8 @@ services:
       - "3000:3000"
     environment:
       DB_HOST: mysql
-      DB_USER: logicam
-      DB_PASSWORD: logicam
+      DB_USER: logitech
+      DB_PASSWORD: logitech
       DB_NAME: logi_cam
       DB_PORT: 3306
       PORT: 3000

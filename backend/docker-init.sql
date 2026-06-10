@@ -5,6 +5,16 @@ CREATE TABLE IF NOT EXISTS types_logement(
     nom ENUM('chambre','studio','appartement') NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS clients(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE,
+    mot_de_passe VARCHAR(255) NOT NULL,
+    telephone VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
 CREATE TABLE IF NOT EXISTS agents(
     id INT AUTO_INCREMENT PRIMARY KEY,
     nom VARCHAR(255) NOT NULL,
@@ -71,5 +81,18 @@ CREATE TABLE IF NOT EXISTS contact_messages (
     FOREIGN KEY (property_id) REFERENCES logements(id) ON DELETE CASCADE,
     FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    expediteur_id INT NOT NULL,
+    expediteur_type ENUM('agent','client') NOT NULL,
+    destinataire_id INT NOT NULL,
+    destinataire_type ENUM('agent','client') NOT NULL,
+    logement_id INT NULL,
+    contenu TEXT NOT NULL,
+    est_lu BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 
 INSERT IGNORE INTO types_logement (id, nom) VALUES (1, 'chambre'), (2, 'studio'), (3, 'appartement');

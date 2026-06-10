@@ -19,6 +19,9 @@ const mapPublication = async (publication) => {
     bedrooms: plain.chambres,
     bathrooms: plain.salles_bain,
     area: plain.surface_m2,
+    amenities: plain.amenities ? plain.amenities.split(',') : [],
+    note: plain.note_avis || 0,
+    publication_status: plain.publication_status,
     images: photos.map((p) => p.url_media),
     agent: agent ? {
       id: agent.id,
@@ -63,6 +66,9 @@ const creerPublication = async (req, res) => {
       chambres: chambres || 1,
       salles_bain: salles_bain || 1,
       surface_m2,
+      amenities: req.body.amenities || '', // Expecting a comma-separated string or array
+      publication_status: 'en_attente',
+      note_avis: 0.0,
     });
 
     return res.status(201).json({
@@ -83,10 +89,13 @@ const mesPublications = async (req, res) => {
       where: { id_agent },
       order: [['id', 'DESC']],
     });
+
+    const mapped = await Promise.all(publications.map(p => mapPublication(p)));
+
     return res.status(200).json({
       message: ' Publications récupérées',
-      total: publications.length,
-      publications,
+      total: mapped.length,
+      publications: mapped,
     });
   } catch (error) {
     console.error('Erreur mesPublications :', error.message);
@@ -104,7 +113,7 @@ const voirPublication = async (req, res) => {
     }
 
     const activeAgentIds = await getActiveAgentIds();
-    if (!activeAgentIds.includes(publication.id_agent)) {
+    if (!activeAgentIds.includes(publication.id_agent) || (publication.publication_status !== 'valide' && req.user?.role !== 'admin' && req.user?.id !== publication.id_agent)) {
       return res.status(404).json({ message: ' Logement non disponible' });
     }
 
@@ -253,6 +262,7 @@ const rechercherLogements = async (req, res) => {
 
     // Filtre par statut (par défaut on montre que les disponibles)
     conditions.statut = statut || 'disponible';
+    conditions.publication_status = 'valide'; // Only validated publications for public search
 
     const activeAgentIds = await getActiveAgentIds();
     if (activeAgentIds.length === 0) {

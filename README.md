@@ -1,4 +1,4 @@
-# Logicam - Plateforme Immobilière
+# Logitech - Plateforme Immobilière
 
 Application full-stack (React + Node.js) pour la gestion immobilière au Cameroun.
 

@@ -9,7 +9,7 @@ const queries = [
     VALUES ('Agent Demo', 'agent@demo.cm', ?, '699000001', 'Agence Demo', 'agent', 'valide')
     ON DUPLICATE KEY UPDATE statut='valide'`, [hash]],
   [`INSERT INTO agents (nom, email, mot_de_passe, telephone, use_role, statut)
-    VALUES ('Admin LogiCam', 'admin@logicam.cm', ?, '600000000', 'admin', 'valide')
+    VALUES ('Admin Logitech', 'admin@logitech.cm', ?, '600000000', 'admin', 'valide')
     ON DUPLICATE KEY UPDATE statut='valide'`, [adminHash]],
 ];
 
@@ -49,7 +49,7 @@ const run = async () => {
     );
   });
 
-  console.log('Demo seed OK — agent@demo.cm / Agent@123 — admin@logicam.cm / Admin@123');
+  console.log('Demo seed OK — agent@demo.cm / Agent@123 — admin@logitech.cm / Admin@123');
   process.exit(0);
 };
 

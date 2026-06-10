@@ -1,20 +1,30 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { authApi } from '../services/api';
 
 const Login = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = (e) => {
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Add login logic here
-    navigate('/home');
+    try {
+      await login(email, password);
+      toast.success('Connexion réussie');
+      navigate('/home');
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
 
   return (
@@ -68,7 +78,7 @@ const Login = () => {
               color: theme.secondaryText,
             }}
           >
-            Connectez-vous à votre compte Logicam
+            Connectez-vous à votre compte Logitech
           </p>
         </div>
 
@@ -259,6 +269,11 @@ const Login = () => {
             <ArrowRight size={20} />
           </button>
 
+          <div style={{ textAlign: 'center', marginBottom: 16 }}>
+            <button type="button" onClick={() => navigate('/register')} style={{ background: 'transparent', border: 'none', color: theme.primary, fontWeight: 600, cursor: 'pointer' }}>
+              Créer un compte locataire
+            </button>
+          </div>
           <div style={{ textAlign: 'center', marginBottom: 16 }}>
             <button type="button" onClick={() => navigate('/home')} style={{ background: 'transparent', border: 'none', color: theme.secondaryText, cursor: 'pointer' }}>
               Continuer en visiteur (sans compte)
