@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 const authMiddleware = require('../middleware/auth.middleware');
+const { registerValidation, loginValidation } = require('../middleware/validation.middleware');
 
 const signToken = (user) =>
   jwt.sign(
@@ -12,233 +13,130 @@ const signToken = (user) =>
     { expiresIn: '24h' }
   );
 
-// Inscription agent (cahier des charges: register)
-router.post('/register', (req, res) => {
-  const {
-    fullName,
-    nom,
-    email,
-    password,
-    mot_de_passe,
-    phone,
-    telephone,
-    agencyName,
-    nom_agence,
-  } = req.body;
-
-  const agentName = fullName || nom;
-  const agentPassword = password || mot_de_passe;
-  const agentPhone = phone || telephone;
-  const agentAgency = agencyName || nom_agence || null;
-
-  if (!agentName || !email || !agentPassword || !agentPhone) {
-    return res.status(400).json({ message: 'Tous les champs obligatoires doivent être remplis.' });
-  }
-
-  const hash = bcrypt.hashSync(agentPassword, 10);
-  const sql =
-    'INSERT INTO agents (nom, email, mot_de_passe, telephone, nom_agence, use_role, statut) VALUES (?, ?, ?, ?, ?, ?, ?)';
-
-  db.query(
-    sql,
-    [agentName, email, hash, agentPhone, agentAgency, 'agent', 'en_attente'],
-    (err) => {
-      if (err) {
-        if (err.code === 'ER_DUP_ENTRY') {
-          return res.status(400).json({ message: 'Cet email est déjà utilisé.' });
-        }
-        return res.status(500).json({ message: 'Erreur serveur.', erreur: err.message });
-      }
-      return res.status(201).json({
-        message: 'Inscription réussie. Votre compte est en attente de validation par l\'administrateur.',
-      });
-    }
-  );
+// Helper function pour normaliser les champs
+const normalizeFields = (body) => ({
+  name: body.fullName || body.nom,
+  email: body.email,
+  password: body.password || body.mot_de_passe,
+  phone: body.phone || body.telephone,
+  agencyName: body.agencyName || body.nom_agence,
 });
 
-router.post('/register/agent', (req, res) => {
-  req.body.fullName = req.body.fullName || req.body.nom;
-  req.body.password = req.body.password || req.body.mot_de_passe;
-  req.body.phone = req.body.phone || req.body.telephone;
-  req.body.agencyName = req.body.agencyName || req.body.nom_agence;
-  const {
-    fullName,
-    nom,
-    email,
-    password,
-    mot_de_passe,
-    phone,
-    telephone,
-    agencyName,
-    nom_agence,
-  } = req.body;
-  const agentName = fullName || nom;
-  const agentPassword = password || mot_de_passe;
-  const agentPhone = phone || telephone;
-  const agentAgency = agencyName || nom_agence || null;
-  if (!agentName || !email || !agentPassword || !agentPhone) {
-    return res.status(400).json({ message: 'Tous les champs obligatoires doivent être remplis.' });
-  }
-  const hash = bcrypt.hashSync(agentPassword, 10);
-  const sql =
-    'INSERT INTO agents (nom, email, mot_de_passe, telephone, nom_agence, use_role, statut) VALUES (?, ?, ?, ?, ?, ?, ?)';
-  db.query(sql, [agentName, email, hash, agentPhone, agentAgency, 'agent', 'en_attente'], (err) => {
+// Helper function pour créer un utilisateur
+const createUser = (table, data, res) => {
+  const hash = bcrypt.hashSync(data.password, 12);
+  const sql = table === 'agents'
+    ? 'INSERT INTO agents (nom, email, mot_de_passe, telephone, nom_agence, use_role, statut) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    : 'INSERT INTO clients (nom, email, mot_de_passe, telephone) VALUES (?, ?, ?, ?)';
+  
+  const params = table === 'agents'
+    ? [data.name, data.email, hash, data.phone, data.agencyName || null, data.role || 'agent', 'en_attente']
+    : [data.name, data.email, hash, data.phone];
+
+  db.query(sql, params, (err) => {
     if (err) {
       if (err.code === 'ER_DUP_ENTRY') {
         return res.status(400).json({ message: 'Cet email est déjà utilisé.' });
       }
       return res.status(500).json({ message: 'Erreur serveur.', erreur: err.message });
     }
-    return res.status(201).json({
-      message: 'Inscription agent réussie. En attente de validation.',
-    });
+    const message = table === 'agents'
+      ? 'Inscription réussie. Votre compte est en attente de validation par l\'administrateur.'
+      : 'Inscription client réussie.';
+    return res.status(201).json({ message });
   });
+};
+
+// Inscription agent (route unifiée)
+router.post('/register/agent', registerValidation, (req, res) => {
+  const normalized = normalizeFields(req.body);
+  normalized.role = 'agent';
+  createUser('agents', normalized, res);
 });
 
-// Connexion unifiée agent/admin
-router.post('/login', (req, res) => {
-  const { email, password, mot_de_passe } = req.body;
-  const pwd = password || mot_de_passe;
+// Inscription client
+router.post('/register/client', registerValidation, (req, res) => {
+  const normalized = normalizeFields(req.body);
+  createUser('clients', normalized, res);
+});
 
-  if (!email || !pwd) {
-    return res.status(400).json({ message: 'Email et mot de passe obligatoires.' });
-  }
+// Helper function pour la connexion
+const loginUser = (table, email, password, roleFilter, res) => {
+  const sql = roleFilter 
+    ? `SELECT * FROM ${table} WHERE email = ? AND use_role = ?`
+    : `SELECT * FROM ${table} WHERE email = ?`;
+  
+  const params = roleFilter ? [email, roleFilter] : [email];
 
-  const sql = 'SELECT * FROM agents WHERE email = ?';
-  db.query(sql, [email], (err, results) => {
+  db.query(sql, params, (err, results) => {
     if (err) return res.status(500).json({ message: 'Erreur serveur.' });
     if (results.length === 0) {
       return res.status(401).json({ message: 'Email ou mot de passe incorrect.' });
     }
 
-    const agent = results[0];
-    if (agent.statut === 'rejete') {
+    const user = results[0];
+    
+    // Vérifier le statut pour les agents
+    if (table === 'agents' && user.statut === 'rejete') {
       return res.status(403).json({ message: 'Compte rejeté par l\'administrateur.' });
     }
 
-    const valid = bcrypt.compareSync(pwd, agent.mot_de_passe);
+    const valid = bcrypt.compareSync(password, user.mot_de_passe);
     if (!valid) {
       return res.status(401).json({ message: 'Email ou mot de passe incorrect.' });
     }
 
     const token = signToken({
-      id: agent.id,
-      email: agent.email,
-      role: agent.use_role,
+      id: user.id,
+      email: user.email,
+      role: table === 'clients' ? 'client' : user.use_role,
     });
+
+    const userData = table === 'clients'
+      ? {
+          id: user.id,
+          fullName: user.nom,
+          email: user.email,
+          phone: user.telephone,
+          role: 'client',
+        }
+      : {
+          id: user.id,
+          fullName: user.nom,
+          email: user.email,
+          phone: user.telephone,
+          agencyName: user.nom_agence,
+          role: user.use_role,
+          status: user.statut,
+        };
 
     return res.status(200).json({
       message: 'Connexion réussie.',
       token,
-      user: {
-        id: agent.id,
-        fullName: agent.nom,
-        email: agent.email,
-        phone: agent.telephone,
-        agencyName: agent.nom_agence,
-        role: agent.use_role,
-        status: agent.statut,
-      },
+      user: userData,
     });
   });
-});
+};
 
-router.post('/login/agent', (req, res) => {
-  const { email, mot_de_passe, password } = req.body;
-  const pwd = mot_de_passe || password;
-
-  if (!email || !pwd) {
-    return res.status(400).json({ message: 'Email et mot de passe obligatoires.' });
-  }
-
-  const sql = 'SELECT * FROM agents WHERE email = ? AND use_role = ?';
-  db.query(sql, [email, 'agent'], (err, results) => {
-    if (err) return res.status(500).json({ message: 'Erreur serveur.' });
-    if (results.length === 0) {
-      return res.status(401).json({ message: 'Email ou mot de passe incorrect.' });
-    }
-
-    const agent = results[0];
-    if (agent.statut === 'rejete') {
-      return res.status(403).json({
-        message: 'Compte rejeté par l\'administrateur.',
-        status: agent.statut,
-      });
-    }
-
-    const valid = bcrypt.compareSync(pwd, agent.mot_de_passe);
-    if (!valid) {
-      return res.status(401).json({ message: 'Email ou mot de passe incorrect.' });
-    }
-
-    const token = signToken({ id: agent.id, email: agent.email, role: 'agent' });
-    return res.status(200).json({ message: 'Connexion réussie.', token, role: 'agent' });
-  });
-});
-
-router.post('/register/client', (req, res) => {
-  const { nom, email, mot_de_passe, telephone, name, password, phone } = req.body;
-  const clientName = nom || name;
-  const clientPassword = mot_de_passe || password;
-  const clientPhone = telephone || phone;
-
-  if (!clientName || !email || !clientPassword || !clientPhone) {
-    return res.status(400).json({ message: 'Tous les champs obligatoires doivent être remplis.' });
-  }
-
-  const hash = bcrypt.hashSync(clientPassword, 10);
-  const sql = 'INSERT INTO clients (nom, email, mot_de_passe, telephone) VALUES (?, ?, ?, ?)';
-
-  db.query(sql, [clientName, email, hash, clientPhone], (err) => {
-    if (err) {
-      if (err.code === 'ER_DUP_ENTRY') {
-        return res.status(400).json({ message: 'Cet email est déjà utilisé.' });
-      }
-      return res.status(500).json({ message: 'Erreur serveur.', erreur: err.message });
-    }
-    return res.status(201).json({ message: 'Inscription client réussie.' });
-  });
-});
-
-router.post('/login/client', (req, res) => {
+// Connexion unifiée agent/admin
+router.post('/login', loginValidation, (req, res) => {
   const { email, password, mot_de_passe } = req.body;
   const pwd = password || mot_de_passe;
+  loginUser('agents', email, pwd, null, res);
+});
 
-  if (!email || !pwd) {
-    return res.status(400).json({ message: 'Email et mot de passe obligatoires.' });
-  }
+// Connexion agent spécifique
+router.post('/login/agent', loginValidation, (req, res) => {
+  const { email, mot_de_passe, password } = req.body;
+  const pwd = mot_de_passe || password;
+  loginUser('agents', email, pwd, 'agent', res);
+});
 
-  const sql = 'SELECT * FROM clients WHERE email = ?';
-  db.query(sql, [email], (err, results) => {
-    if (err) return res.status(500).json({ message: 'Erreur serveur.' });
-    if (results.length === 0) {
-      return res.status(401).json({ message: 'Email ou mot de passe incorrect.' });
-    }
-
-    const client = results[0];
-    const valid = bcrypt.compareSync(pwd, client.mot_de_passe);
-    if (!valid) {
-      return res.status(401).json({ message: 'Email ou mot de passe incorrect.' });
-    }
-
-    const token = signToken({
-      id: client.id,
-      email: client.email,
-      role: 'client',
-    });
-
-    return res.status(200).json({
-      message: 'Connexion réussie.',
-      token,
-      user: {
-        id: client.id,
-        fullName: client.nom,
-        email: client.email,
-        phone: client.telephone,
-        role: 'client',
-      },
-    });
-  });
+// Connexion client
+router.post('/login/client', loginValidation, (req, res) => {
+  const { email, password, mot_de_passe } = req.body;
+  const pwd = password || mot_de_passe;
+  loginUser('clients', email, pwd, null, res);
 });
 
 router.get('/me', authMiddleware, (req, res) => {
@@ -295,7 +193,7 @@ router.put('/profile', authMiddleware, (req, res) => {
 
   if (password) {
     sql += ', mot_de_passe = ?';
-    params.push(bcrypt.hashSync(password, 10));
+    params.push(bcrypt.hashSync(password, 12));
   }
 
   sql += ' WHERE id = ?';

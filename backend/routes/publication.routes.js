@@ -9,17 +9,22 @@ const {
   changerStatut,
   rechercherLogements,
 } = require('../controllers/publication.controller');
-// Route publique de recherche
-router.get('/recherche', rechercherLogements);
+const { publicationValidation } = require('../middleware/validation.middleware');
 const verifierToken = require('../middleware/auth.middleware');
 const { verifierAgent } = require('../middleware/agent.middleware');
 const { verifierAbonnementActif } = require('../middleware/subscription.middleware');
 
-router.post('/',              verifierToken, verifierAgent, verifierAbonnementActif, creerPublication);
-router.get('/mes-annonces',   verifierToken, verifierAgent, mesPublications);
-router.put('/:id',            verifierToken, verifierAgent, modifierPublication);
-router.delete('/:id',         verifierToken, verifierAgent, supprimerPublication);
-router.put('/:id/statut',     verifierToken, verifierAgent, changerStatut);
-router.get('/:id',            voirPublication);
+// Route publique de recherche
+router.get('/recherche', rechercherLogements);
+
+// Routes protégées pour les agents
+router.post('/', verifierToken, verifierAgent, verifierAbonnementActif, publicationValidation, creerPublication);
+router.get('/mes-annonces', verifierToken, verifierAgent, mesPublications);
+router.put('/:id', verifierToken, verifierAgent, publicationValidation, modifierPublication);
+router.delete('/:id', verifierToken, verifierAgent, supprimerPublication);
+router.put('/:id/statut', verifierToken, verifierAgent, changerStatut);
+
+// Route publique pour voir une publication
+router.get('/:id', voirPublication);
 
 module.exports = router;
