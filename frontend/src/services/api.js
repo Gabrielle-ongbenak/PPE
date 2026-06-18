@@ -1,7 +1,7 @@
 // frontend/src/services/api.js
 // Configuration complète de l'API Logitech
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'; // Ton backend
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'; // Ton backend
 
 // ─────────────────────────────────────────
 // RÉCUPÉRER LE TOKEN
