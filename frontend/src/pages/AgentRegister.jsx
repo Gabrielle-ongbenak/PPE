@@ -20,7 +20,11 @@ const AgentRegister = () => {
       setMessage(res.message);
       setTimeout(() => navigate('/agent/login'), 2000);
     } catch (err) {
-      setError(err.message);
+      if (err.errors && Array.isArray(err.errors)) {
+        setError(err.errors.map(e => e.message).join(', '));
+      } else {
+        setError(err.message);
+      }
     }
   };
 

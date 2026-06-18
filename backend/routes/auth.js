@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 const authMiddleware = require('../middleware/auth.middleware');
-const { registerValidation, loginValidation } = require('../middleware/validation.middleware');
+const { registerValidation, loginValidation, normalizeRegistrationFields } = require('../middleware/validation.middleware');
 
 const signToken = (user) =>
   jwt.sign(
@@ -28,7 +28,7 @@ const createUser = (table, data, res) => {
   const sql = table === 'agents'
     ? 'INSERT INTO agents (nom, email, mot_de_passe, telephone, nom_agence, use_role, statut) VALUES (?, ?, ?, ?, ?, ?, ?)'
     : 'INSERT INTO clients (nom, email, mot_de_passe, telephone) VALUES (?, ?, ?, ?)';
-  
+
   const params = table === 'agents'
     ? [data.name, data.email, hash, data.phone, data.agencyName || null, data.role || 'agent', 'en_attente']
     : [data.name, data.email, hash, data.phone];
@@ -48,24 +48,24 @@ const createUser = (table, data, res) => {
 };
 
 // Inscription agent (route unifiée)
-router.post('/register/agent', registerValidation, (req, res) => {
+router.post('/register/agent', normalizeRegistrationFields, registerValidation, (req, res) => {
   const normalized = normalizeFields(req.body);
   normalized.role = 'agent';
   createUser('agents', normalized, res);
 });
 
 // Inscription client
-router.post('/register/client', registerValidation, (req, res) => {
+router.post('/register/client', normalizeRegistrationFields, registerValidation, (req, res) => {
   const normalized = normalizeFields(req.body);
   createUser('clients', normalized, res);
 });
 
 // Helper function pour la connexion
 const loginUser = (table, email, password, roleFilter, res) => {
-  const sql = roleFilter 
+  const sql = roleFilter
     ? `SELECT * FROM ${table} WHERE email = ? AND use_role = ?`
     : `SELECT * FROM ${table} WHERE email = ?`;
-  
+
   const params = roleFilter ? [email, roleFilter] : [email];
 
   db.query(sql, params, (err, results) => {
@@ -75,7 +75,7 @@ const loginUser = (table, email, password, roleFilter, res) => {
     }
 
     const user = results[0];
-    
+
     // Vérifier le statut pour les agents
     if (table === 'agents' && user.statut === 'rejete') {
       return res.status(403).json({ message: 'Compte rejeté par l\'administrateur.' });
@@ -94,21 +94,21 @@ const loginUser = (table, email, password, roleFilter, res) => {
 
     const userData = table === 'clients'
       ? {
-          id: user.id,
-          fullName: user.nom,
-          email: user.email,
-          phone: user.telephone,
-          role: 'client',
-        }
+        id: user.id,
+        fullName: user.nom,
+        email: user.email,
+        phone: user.telephone,
+        role: 'client',
+      }
       : {
-          id: user.id,
-          fullName: user.nom,
-          email: user.email,
-          phone: user.telephone,
-          agencyName: user.nom_agence,
-          role: user.use_role,
-          status: user.statut,
-        };
+        id: user.id,
+        fullName: user.nom,
+        email: user.email,
+        phone: user.telephone,
+        agencyName: user.nom_agence,
+        role: user.use_role,
+        status: user.statut,
+      };
 
     return res.status(200).json({
       message: 'Connexion réussie.',

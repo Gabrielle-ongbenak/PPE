@@ -40,7 +40,11 @@ const Register = () => {
       toast.success('Compte créé avec succès !');
       navigate('/login');
     } catch (err) {
-      toast.error(err.message);
+      if (err.errors && Array.isArray(err.errors)) {
+        err.errors.forEach(e => toast.error(e.message));
+      } else {
+        toast.error(err.message);
+      }
     }
   };
 

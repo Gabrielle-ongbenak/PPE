@@ -15,6 +15,20 @@ const validateRequest = (req, res, next) => {
   next();
 };
 
+/**
+ * Middleware pour normaliser les champs d'inscription (FR <-> EN)
+ * supporte à la fois 'fullName'/'name' et 'nom', 'password' et 'mot_de_passe', 'phone' et 'telephone'
+ */
+const normalizeRegistrationFields = (req, res, next) => {
+  if (req.body) {
+    req.body.nom = req.body.nom || req.body.fullName || req.body.name;
+    req.body.mot_de_passe = req.body.mot_de_passe || req.body.password;
+    req.body.telephone = req.body.telephone || req.body.phone;
+    req.body.nom_agence = req.body.nom_agence || req.body.agencyName;
+  }
+  next();
+};
+
 // Validation pour l'inscription
 const registerValidation = [
   body('nom')
@@ -29,8 +43,7 @@ const registerValidation = [
     .normalizeEmail(),
   body('mot_de_passe')
     .notEmpty().withMessage('Le mot de passe est requis')
-    .isLength({ min: 8 }).withMessage('Le mot de passe doit contenir au moins 8 caractères')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'),
+    .isLength({ min: 6 }).withMessage('Le mot de passe doit contenir au moins 6 caractères'),
   body('telephone')
     .trim()
     .notEmpty().withMessage('Le téléphone est requis')
@@ -86,5 +99,6 @@ module.exports = {
   validateRequest,
   registerValidation,
   loginValidation,
-  publicationValidation
+  publicationValidation,
+  normalizeRegistrationFields
 };

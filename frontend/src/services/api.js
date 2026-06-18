@@ -1,7 +1,7 @@
 // frontend/src/services/api.js
 // Configuration complète de l'API Logitech
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'; // Ton backend
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'; // Ton backend
 
 // ─────────────────────────────────────────
 // RÉCUPÉRER LE TOKEN
@@ -33,7 +33,10 @@ const apiRequest = async (path, options = {}, baseUrl = API_BASE) => {
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(data.message || 'Erreur API');
+    const error = new Error(data.message || 'Erreur API');
+    error.status = response.status;
+    error.errors = data.errors;
+    throw error;
   }
   return data;
 };
@@ -68,10 +71,10 @@ export const authApi = {
     apiRequest('/api/auth/register/client', {
       method: 'POST',
       body: JSON.stringify({
-        nom: payload.name,
+        nom: payload.nom || payload.name || payload.fullName,
         email: payload.email,
-        mot_de_passe: payload.password,
-        telephone: payload.phone,
+        mot_de_passe: payload.mot_de_passe || payload.password,
+        telephone: payload.telephone || payload.phone,
       }),
     }),
 
@@ -80,11 +83,11 @@ export const authApi = {
     apiRequest('/api/auth/register/agent', {
       method: 'POST',
       body: JSON.stringify({
-        nom: payload.fullName,
+        nom: payload.nom || payload.fullName || payload.name,
         email: payload.email,
-        mot_de_passe: payload.password,
-        telephone: payload.phone,
-        nom_agence: payload.agencyName,
+        mot_de_passe: payload.mot_de_passe || payload.password,
+        telephone: payload.telephone || payload.phone,
+        nom_agence: payload.nom_agence || payload.agencyName,
       }),
     }),
 
