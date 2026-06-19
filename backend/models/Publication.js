@@ -1,0 +1,80 @@
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+
+const Publication = sequelize.define('Publication', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  titre: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+  },
+  id_agent: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  id_type: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 1,
+  },
+  ville: {
+    type: DataTypes.STRING(60),
+    allowNull: false,
+  },
+  quartier: {
+    type: DataTypes.STRING(60),
+    allowNull: false,
+  },
+  region: {
+    type: DataTypes.STRING(60),
+    allowNull: true,
+  },
+  chambres: {
+    type: DataTypes.INTEGER,
+    defaultValue: 1,
+  },
+  salles_bain: {
+    type: DataTypes.INTEGER,
+    defaultValue: 1,
+  },
+  surface_m2: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+  },
+  adresse_map: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+  },
+  prix: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+  },
+  descriptions: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  statut: {
+    type: DataTypes.ENUM('disponible', 'occupe'),
+    defaultValue: 'disponible',
+  },
+  publication_status: {
+    type: DataTypes.ENUM('en_attente', 'valide', 'rejete'),
+    defaultValue: 'en_attente',
+  },
+  amenities: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  note_avis: {
+    type: DataTypes.DECIMAL(2, 1),
+    defaultValue: 0.0,
+  },
+}, {
+  tableName: 'logements',
+  timestamps: false,
+});
+
+module.exports = Publication;
