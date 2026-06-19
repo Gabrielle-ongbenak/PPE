@@ -26,11 +26,14 @@ const Agent = sequelize.define('Agent', {
     type: DataTypes.STRING(255),
     allowNull: true,
   },
+  photo_url: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
   documents_path: {
     type: DataTypes.TEXT,
     allowNull: true,
   },
-  // statut du compte : en_attente, valide, rejete
   statut: {
     type: DataTypes.ENUM('valide', 'rejete', 'en_attente'),
     defaultValue: 'en_attente',

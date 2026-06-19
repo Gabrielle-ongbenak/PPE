@@ -18,12 +18,17 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    console.log('[Login] Clic détecté. email:', email, 'password:', password ? '***' : 'VIDE');
     try {
-      await login(email, password);
+      console.log('[Login] Appel de login()...');
+      const res = await login(email, password);
+      console.log('[Login] Login réussi:', res);
       toast.success('Connexion réussie');
       navigate('/home');
     } catch (err) {
-      toast.error(err.message);
+      console.error('[Login] Erreur attrapée:', err);
+      console.error('[Login] Status:', err.status, 'Message:', err.message);
+      toast.error(err.message || 'Erreur de connexion');
     }
   };
 

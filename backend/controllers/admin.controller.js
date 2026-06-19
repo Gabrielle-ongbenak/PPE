@@ -3,6 +3,7 @@
 
 const Agent = require('../models/Agent');
 const Publication = require('../models/Publication');
+const Photo = require('../models/Photo');
 
 // ─────────────────────────────────────────
 // VOIR tous les agents

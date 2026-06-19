@@ -1,35 +1,28 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
-import { authApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 const AdminLogin = () => {
   const { theme } = useTheme();
+  const { loginAdmin } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     try {
-      const res = await authApi.loginAdmin(email, password);
+      const res = await loginAdmin(email, password);
 
-      // Décode le token JWT
-      const payload = JSON.parse(atob(res.token.split('.')[1]));
-
-      // Vérifie que c'est un admin
-      if (payload.role !== 'admin') {
-        throw new Error('Accès réservé aux administrateurs');
+      if (res.user && res.user.role !== 'admin') {
+        toast.error('Accès réservé aux administrateurs');
+        return;
       }
 
-      // Sauvegarde le token
-      localStorage.setItem('logitech_token', res.token);
-
-      // Redirige vers le dashboard
       toast.success('Accès admin autorisé');
-      window.location.href = '/admin/dashboard';
-
+      navigate('/admin/dashboard');
     } catch (err) {
       toast.error(err.message);
     }
@@ -38,7 +31,6 @@ const AdminLogin = () => {
   return (
     <div style={{ minHeight: '100vh', padding: 24, backgroundColor: theme.background }}>
       <h1 style={{ color: theme.text }}>Administration Logitech</h1>
-      {error && <p style={{ color: '#ef4444' }}>{error}</p>}
       <form onSubmit={handleSubmit}>
         <input
           style={input(theme)}

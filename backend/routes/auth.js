@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 const authMiddleware = require('../middleware/auth.middleware');
 const { registerValidation, loginValidation, normalizeRegistrationFields } = require('../middleware/validation.middleware');
+const { uploadAgentPhoto } = require('../config/cloudinary');
 
 const signToken = (user) =>
   jwt.sign(
@@ -62,6 +63,10 @@ router.post('/register/client', normalizeRegistrationFields, registerValidation,
 
 // Helper function pour la connexion
 const loginUser = (table, email, password, roleFilter, res) => {
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email et mot de passe requis.' });
+  }
+
   const sql = roleFilter
     ? `SELECT * FROM ${table} WHERE email = ? AND use_role = ?`
     : `SELECT * FROM ${table} WHERE email = ?`;
@@ -69,7 +74,12 @@ const loginUser = (table, email, password, roleFilter, res) => {
   const params = roleFilter ? [email, roleFilter] : [email];
 
   db.query(sql, params, (err, results) => {
-    if (err) return res.status(500).json({ message: 'Erreur serveur.' });
+    if (res.headersSent) return;
+
+    if (err) {
+      console.error('[Auth] Erreur SQL login:', err.message);
+      return res.status(500).json({ message: 'Erreur serveur.' });
+    }
     if (results.length === 0) {
       return res.status(401).json({ message: 'Email ou mot de passe incorrect.' });
     }
@@ -120,23 +130,20 @@ const loginUser = (table, email, password, roleFilter, res) => {
 
 // Connexion unifiée agent/admin
 router.post('/login', loginValidation, (req, res) => {
-  const { email, password, mot_de_passe } = req.body;
-  const pwd = password || mot_de_passe;
-  loginUser('agents', email, pwd, null, res);
+  const { email, password } = req.body;
+  loginUser('agents', email, password, null, res);
 });
 
 // Connexion agent spécifique
 router.post('/login/agent', loginValidation, (req, res) => {
-  const { email, mot_de_passe, password } = req.body;
-  const pwd = mot_de_passe || password;
-  loginUser('agents', email, pwd, 'agent', res);
+  const { email, password } = req.body;
+  loginUser('agents', email, password, 'agent', res);
 });
 
 // Connexion client
 router.post('/login/client', loginValidation, (req, res) => {
-  const { email, password, mot_de_passe } = req.body;
-  const pwd = password || mot_de_passe;
-  loginUser('clients', email, pwd, null, res);
+  const { email, password } = req.body;
+  loginUser('clients', email, password, null, res);
 });
 
 router.get('/me', authMiddleware, (req, res) => {
@@ -158,7 +165,7 @@ router.get('/me', authMiddleware, (req, res) => {
       });
     });
   } else {
-    const sql = 'SELECT id, nom, email, telephone, nom_agence, statut, use_role FROM agents WHERE id = ?';
+    const sql = 'SELECT id, nom, email, telephone, nom_agence, photo_url, statut, use_role FROM agents WHERE id = ?';
     db.query(sql, [req.user.id], (err, results) => {
       if (err || results.length === 0) {
         return res.status(404).json({ message: 'Utilisateur introuvable.' });
@@ -171,6 +178,7 @@ router.get('/me', authMiddleware, (req, res) => {
           email: u.email,
           phone: u.telephone,
           agencyName: u.nom_agence,
+          photoUrl: u.photo_url,
           role: u.use_role,
           status: u.statut,
         },
@@ -207,6 +215,32 @@ router.put('/profile', authMiddleware, (req, res) => {
 
 router.get('/test-protege', authMiddleware, (req, res) => {
   res.status(200).json({ message: 'Accès autorisé.', utilisateur: req.user });
+});
+
+// Upload photo de profil agent
+router.post('/photo', authMiddleware, (req, res) => {
+  uploadAgentPhoto.single('photo')(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ message: err.message });
+    }
+    if (!req.file) {
+      return res.status(400).json({ message: 'Aucun fichier envoyé.' });
+    }
+
+    const photoUrl = req.file.path;
+    const table = req.user.role === 'client' ? 'clients' : 'agents';
+    const sql = `UPDATE ${table} SET photo_url = ? WHERE id = ?`;
+
+    db.query(sql, [photoUrl, req.user.id], (err) => {
+      if (err) {
+        return res.status(500).json({ message: 'Erreur lors de la sauvegarde de la photo.' });
+      }
+      return res.status(200).json({
+        message: 'Photo de profil mise à jour.',
+        photo_url: photoUrl,
+      });
+    });
+  });
 });
 
 module.exports = router;

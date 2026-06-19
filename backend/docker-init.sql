@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS agents(
     mot_de_passe VARCHAR(255) NOT NULL,
     telephone VARCHAR(20) NOT NULL,
     nom_agence VARCHAR(255) NULL,
+    photo_url TEXT NULL,
     documents_path TEXT,
     statut ENUM('valide','rejete','en_attente') DEFAULT 'en_attente',
     use_role ENUM('agent','admin') NOT NULL,

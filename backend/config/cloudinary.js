@@ -15,7 +15,8 @@ cloudinary.config({
   secure: true,
 });
 
-const storage = new CloudinaryStorage({
+// Storage pour les photos de logements
+const publicationStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'logitech/publications',
@@ -33,20 +34,46 @@ const storage = new CloudinaryStorage({
   },
 });
 
-const upload = multer({
-  storage: storage,
-  limits: { 
-    fileSize: 5 * 1024 * 1024, // 5MB
-    files: 10 // Maximum 10 fichiers
-  },
-  fileFilter: (req, file, cb) => {
-    const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    if (allowedMimes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Seules les images (JPEG, PNG, WebP) sont acceptées.'), false);
-    }
+// Storage pour les photos de profil agent
+const agentProfileStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'logitech/agents',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    transformation: [
+      { width: 400, height: 400, crop: 'fill' },
+      { quality: 'auto:good' },
+      { fetch_format: 'auto' }
+    ],
+    public_id: (req, file) => {
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(2, 15);
+      return `agent_${req.user.id}_${timestamp}_${random}`;
+    },
   },
 });
 
-module.exports = { upload, cloudinary };
+const fileFilter = (req, file, cb) => {
+  const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  if (allowedMimes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Seules les images (JPEG, PNG, WebP) sont acceptées.'), false);
+  }
+};
+
+// Upload pour publications (10 fichiers max)
+const upload = multer({
+  storage: publicationStorage,
+  limits: { fileSize: 5 * 1024 * 1024, files: 10 },
+  fileFilter,
+});
+
+// Upload pour photo de profil agent (1 fichier)
+const uploadAgentPhoto = multer({
+  storage: agentProfileStorage,
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+  fileFilter,
+});
+
+module.exports = { upload, uploadAgentPhoto, cloudinary };

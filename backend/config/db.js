@@ -1,4 +1,4 @@
-const mysql= require('mysql2');
+const mysql = require('mysql2');
 require('dotenv').config({
   path: process.env.ENV_FILE || '.env',
   override: false,
@@ -12,13 +12,22 @@ const db = mysql.createConnection({
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
+    connectTimeout: 5000,
 });
-db.connect((err)=>{
-    if (err){
-        console.error('Erreur de connexion a la base de donnees:', err);
+
+db.connect((err) => {
+    if (err) {
+        console.error('Erreur de connexion a la base de donnees:', err.message);
         return;
     }
-    console.log('Connecté à la base de données logi_cam')
+    console.log('Connecté à la base de données logi_cam');
+});
+
+db.on('error', (err) => {
+    console.error('Erreur MySQL (pool):', err.message);
+    if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+        console.error('Connexion MySQL perdue.');
+    }
 });
 
 module.exports = db;

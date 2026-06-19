@@ -26,19 +26,41 @@ const apiRequest = async (path, options = {}, baseUrl = API_BASE) => {
     url = `${url}${separator}_t=${Date.now()}`;
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  console.log('[API] Requête:', options.method || 'GET', url);
+  if (options.body) console.log('[API] Body:', options.body);
 
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const error = new Error(data.message || 'Erreur API');
-    error.status = response.status;
-    error.errors = data.errors;
-    throw error;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+    console.log('[API] Réponse status:', response.status, response.statusText);
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      console.error('[API] Erreur HTTP:', response.status, data);
+      const error = new Error(data.message || 'Erreur API');
+      error.status = response.status;
+      error.errors = data.errors;
+      throw error;
+    }
+    console.log('[API] Succès:', data);
+    return data;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      console.error('[API] Timeout: le serveur a mis trop de temps à répondre');
+      throw new Error('Le serveur ne répond pas. Réessayez.');
+    }
+    console.error('[API] Erreur réseau:', err.message);
+    throw err;
   }
-  return data;
 };
 
 // ─────────────────────────────────────────
@@ -46,24 +68,24 @@ const apiRequest = async (path, options = {}, baseUrl = API_BASE) => {
 // ─────────────────────────────────────────
 export const authApi = {
   // Connexion client
-  login: (email, mot_de_passe) =>
+  login: (email, password) =>
     apiRequest('/api/auth/login/client', {
       method: 'POST',
-      body: JSON.stringify({ email, mot_de_passe }),
+      body: JSON.stringify({ email, password }),
     }),
 
   // Connexion agent
-  loginAgent: (email, mot_de_passe) =>
+  loginAgent: (email, password) =>
     apiRequest('/api/auth/login/agent', {
       method: 'POST',
-      body: JSON.stringify({ email, mot_de_passe }),
+      body: JSON.stringify({ email, password }),
     }),
 
   // Connexion admin
-  loginAdmin: (email, mot_de_passe) =>
+  loginAdmin: (email, password) =>
     apiRequest('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password: mot_de_passe }),
+      body: JSON.stringify({ email, password }),
     }),
 
   // Inscription client
@@ -73,7 +95,7 @@ export const authApi = {
       body: JSON.stringify({
         nom: payload.nom || payload.name || payload.fullName,
         email: payload.email,
-        mot_de_passe: payload.mot_de_passe || payload.password,
+        password: payload.password,
         telephone: payload.telephone || payload.phone,
       }),
     }),
@@ -85,7 +107,7 @@ export const authApi = {
       body: JSON.stringify({
         nom: payload.nom || payload.fullName || payload.name,
         email: payload.email,
-        mot_de_passe: payload.mot_de_passe || payload.password,
+        password: payload.password,
         telephone: payload.telephone || payload.phone,
         nom_agence: payload.nom_agence || payload.agencyName,
       }),
@@ -100,6 +122,16 @@ export const authApi = {
 
   // Récupérer infos utilisateur depuis le token
   me: () => apiRequest('/api/auth/me'),
+
+  // Upload photo de profil
+  uploadPhoto: (formData) =>
+    fetch(`${API_BASE}/api/auth/photo`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${getToken()}`,
+      },
+      body: formData,
+    }).then(res => res.json()),
 };
 
 // ─────────────────────────────────────────

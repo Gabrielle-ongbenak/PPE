@@ -24,19 +24,36 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const res = await authApi.login(email, password);
-    localStorage.setItem('logitech_token', res.token);
-    setUser(res.user);
-    return res;
+    console.log('[AuthContext] login() appelé avec email:', email);
+    try {
+      const res = await authApi.login(email, password);
+      console.log('[AuthContext] authApi.login() réponse:', res);
+      localStorage.setItem('logitech_token', res.token);
+      setUser(res.user);
+      return res;
+    } catch (err) {
+      console.error('[AuthContext] login() erreur:', err);
+      throw err;
+    }
   };
 
   const loginAgent = async (email, password) => {
     try {
       const res = await authApi.loginAgent(email, password);
       localStorage.setItem('logitech_token', res.token);
-      const me = await authApi.me();
-      setUser(me.user);
-      return me;
+      setUser(res.user);
+      return res;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const loginAdmin = async (email, password) => {
+    try {
+      const res = await authApi.loginAdmin(email, password);
+      localStorage.setItem('logitech_token', res.token);
+      setUser(res.user);
+      return res;
     } catch (err) {
       throw err;
     }
@@ -55,7 +72,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginAgent, logout, setUser, updateProfile }}>
+    <AuthContext.Provider value={{ user, loading, login, loginAgent, loginAdmin, logout, setUser, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

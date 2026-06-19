@@ -61,7 +61,8 @@ const getNom = async (id, type) => {
   try {
     const table = type === 'agent' ? 'agents' : 'clients';
     const [results] = await sequelize.query(
-      `SELECT nom FROM ${table} WHERE id = ${id}`
+      `SELECT nom FROM ${table} WHERE id = :id`,
+      { replacements: { id } }
     );
     return results.length > 0 ? results[0].nom : 'Inconnu';
   } catch (error) {

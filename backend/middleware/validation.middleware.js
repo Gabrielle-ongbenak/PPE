@@ -17,12 +17,13 @@ const validateRequest = (req, res, next) => {
 
 /**
  * Middleware pour normaliser les champs d'inscription (FR <-> EN)
- * supporte à la fois 'fullName'/'name' et 'nom', 'password' et 'mot_de_passe', 'phone' et 'telephone'
+ * Le frontend envoie 'password', le backend mappe vers 'mot_de_passe' pour la DB.
  */
 const normalizeRegistrationFields = (req, res, next) => {
   if (req.body) {
     req.body.nom = req.body.nom || req.body.fullName || req.body.name;
-    req.body.mot_de_passe = req.body.mot_de_passe || req.body.password;
+    req.body.password = req.body.password || req.body.mot_de_passe;
+    req.body.mot_de_passe = req.body.password;
     req.body.telephone = req.body.telephone || req.body.phone;
     req.body.nom_agence = req.body.nom_agence || req.body.agencyName;
   }
@@ -41,7 +42,8 @@ const registerValidation = [
     .notEmpty().withMessage('L\'email est requis')
     .isEmail().withMessage('Email invalide')
     .normalizeEmail(),
-  body('mot_de_passe')
+  body('password')
+    .trim()
     .notEmpty().withMessage('Le mot de passe est requis')
     .isLength({ min: 6 }).withMessage('Le mot de passe doit contenir au moins 6 caractères'),
   body('telephone')
@@ -58,7 +60,8 @@ const loginValidation = [
     .notEmpty().withMessage('L\'email est requis')
     .isEmail().withMessage('Email invalide')
     .normalizeEmail(),
-  body('mot_de_passe')
+  body('password')
+    .trim()
     .notEmpty().withMessage('Le mot de passe est requis'),
   validateRequest
 ];
